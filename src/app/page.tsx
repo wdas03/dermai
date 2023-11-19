@@ -31,7 +31,7 @@ export default function Home() {
                   <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Upload Image</h2>
                   <p className="text-gray-500 dark:text-gray-400">Upload a picture of your skin to receive a diagnosis</p>
                   <div className="mt-2">
-                    <Button size="sm">Upload Image</Button>
+                    <Button size="sm" onClick={() => setActiveTab('skinDiagnosis')}>Upload Image</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -42,7 +42,7 @@ export default function Home() {
                     Find available appointments with doctors based on location and specialty
                   </p>
                   <div className="mt-2 space-y-2">
-                    <Input placeholder="Location" />
+                    {/* <Input placeholder="Location" />
                     <Select>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a specialty" />
@@ -54,8 +54,8 @@ export default function Home() {
                           <SelectItem value="pediatrics">Pediatrics</SelectItem>
                         </SelectGroup>
                       </SelectContent>
-                    </Select>
-                    <Button size="sm">Search</Button>
+                    </Select> */}
+                    <Button size="sm" onClick={() => setActiveTab('appointments')}>Search</Button>
                   </div>
                 </CardContent>
               </Card>
