@@ -10,7 +10,7 @@ import { SelectValue, SelectTrigger, SelectLabel, SelectItem, SelectGroup, Selec
 import { useState } from 'react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('skinDiagnosis');
+  const [activeTab, setActiveTab] = useState('home');
 
   const getTabClass = (tabName: string) => {
     return activeTab === tabName
@@ -21,7 +21,69 @@ export default function Home() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'home':
-        return <div>Home Content</div>;
+        return (
+          <>
+          <div className="container mx-auto py-4 px-4 space-y-8 ">
+            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-grow">
+              <Card className="pt-4">
+                <CardContent>
+                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Upload Image</h2>
+                  <p className="text-gray-500 dark:text-gray-400">Upload a picture of your skin to receive a diagnosis</p>
+                  <div className="mt-2">
+                    <Button size="sm">Upload Image</Button>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="pt-4 mt-4">
+                <CardContent>
+                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Search Doctors</h2>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Find available appointments with doctors based on location and specialty
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    <Input placeholder="Location" />
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a specialty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="dermatology">Dermatology</SelectItem>
+                          <SelectItem value="general">General Practice</SelectItem>
+                          <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm">Search</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="flex-grow">
+              <Card className="pt-4">
+                <CardContent>
+                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Scheduled Appointments</h2>
+                  <p className="text-gray-500 dark:text-gray-400">View your upcoming appointments</p>
+                  <div className="mt-2 space-y-2">
+                    <div className="border rounded-lg p-5">
+                      <p className="font-bold">Dr. Jane Doe</p>
+                      <p>General Practice</p>
+                      <p>Tomorrow at 2:00 PM</p>
+                    </div>
+                    <div className="border rounded-lg p-5">
+                      <p className="font-bold">Dr. John Smith</p>
+                      <p>Dermatology</p>
+                      <p>Next week at 11:00 AM</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          </div>
+          </>
+        )
       case 'skinDiagnosis':
         return (
           <>
@@ -111,7 +173,7 @@ export default function Home() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    <img
+                    {/* <img
                       alt="Map"
                       className="mt-2"
                       height="300"
@@ -121,7 +183,7 @@ export default function Home() {
                         objectFit: "cover",
                       }}
                       width="300"
-                    />
+                    /> */}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="specialty">Specialty</Label>
@@ -149,7 +211,64 @@ export default function Home() {
           </>
         );
       case 'chat':
-        return <div>Chat with Doctors Content</div>;
+        return (
+          <>
+           <div className="flex flex-col space-y-4 bg-white border shadow-sm rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-100/40 mr-3">
+                <svg
+                  className=" h-6 w-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className="bg-zinc-100/40 rounded-lg px-4 py-2">
+                <p className="text-sm">Hello, Doctor</p>
+              </div>
+            </div>
+            <div className="flex items-start ml-auto">
+              <div className="bg-zinc-800/40 text-zinc-50 rounded-lg px-4 py-2">
+                <p className="text-sm">Hello, how can I help you today?</p>
+              </div>
+              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-800/40 ml-3">
+                <svg
+                  className=" h-6 w-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="flex">
+              <Input className="flex-grow mr-2" placeholder="Enter your message..." />
+              <Button className="w-auto" variant="outline">
+                Send
+              </Button>
+            </div>
+          </div>
+          </>
+        );
       default:
         return null;
     }
@@ -160,7 +279,7 @@ export default function Home() {
       <div className="hidden border-r bg-zinc-100/40 lg:block dark:bg-zinc-800/40">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-[60px] items-center border-b px-6">
-            <Link href="" className={getTabClass('skinDiagnosis')} onClick={() => setActiveTab('skinDiagnosis')}>
+            <Link href="" className={getTabClass(activeTab)} onClick={() => setActiveTab('home')}>
                 <svg
                   className=" h-6 w-6"
                   fill="none"
@@ -175,7 +294,7 @@ export default function Home() {
                 >
                   <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                 </svg>
-                <span className="">DermAssistant+</span>
+                <span className="">DermAssist+</span>
               </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">
@@ -184,7 +303,7 @@ export default function Home() {
                 className={getTabClass('home')}
                 // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                 href=""
-                onClick={() => setActiveTab('skinDiagnosis')}
+                onClick={() => setActiveTab('home')}
               >
                 <svg
                   className=" h-4 w-4"
@@ -310,117 +429,3 @@ export default function Home() {
     </div>
   )
 }
-
-
-
-// export default function Home() {
-//   return (
-//     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-//       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-//         <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-//           Get started by editing&nbsp;
-//           <code className="font-mono font-bold">src/app/page.tsx</code>
-//         </p>
-//         <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-//           <a
-//             className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-//             href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//           >
-//             By{' '}
-//             <Image
-//               src="/vercel.svg"
-//               alt="Vercel Logo"
-//               className="dark:invert"
-//               width={100}
-//               height={24}
-//               priority
-//             />
-//           </a>
-//         </div>
-//       </div>
-
-//       <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-//         <Image
-//           className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-//           src="/next.svg"
-//           alt="Next.js Logo"
-//           width={180}
-//           height={37}
-//           priority
-//         />
-//       </div>
-
-//       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-//         <a
-//           href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-//           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <h2 className={`mb-3 text-2xl font-semibold`}>
-//             Docs{' '}
-//             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-//               -&gt;
-//             </span>
-//           </h2>
-//           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-//             Find in-depth information about Next.js features and API.
-//           </p>
-//         </a>
-
-//         <a
-//           href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <h2 className={`mb-3 text-2xl font-semibold`}>
-//             Learn{' '}
-//             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-//               -&gt;
-//             </span>
-//           </h2>
-//           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-//             Learn about Next.js in an interactive course with&nbsp;quizzes!
-//           </p>
-//         </a>
-
-//         <a
-//           href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-//           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <h2 className={`mb-3 text-2xl font-semibold`}>
-//             Templates{' '}
-//             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-//               -&gt;
-//             </span>
-//           </h2>
-//           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-//             Explore starter templates for Next.js.
-//           </p>
-//         </a>
-
-//         <a
-//           href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-//           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <h2 className={`mb-3 text-2xl font-semibold`}>
-//             Deploy{' '}
-//             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-//               -&gt;
-//             </span>
-//           </h2>
-//           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-//             Instantly deploy your Next.js site to a shareable URL with Vercel.
-//           </p>
-//         </a>
-//       </div>
-//     </main>
-//   )
-// }
