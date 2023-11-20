@@ -1,0 +1,327 @@
+swagger: "2.0"
+info:
+  version: 2.0.0
+  title: "SkinFix API"
+  description: "SkinFix - First-level diagnosis of skin conditions, medical assistance, and doctor-patient interaction."
+host: "api.skinfix.com"
+basePath: "/api/v1"
+schemes:
+- "https"
+consumes:
+- "application/json"
+- "image/png"
+- "image/jpeg"
+- "image/jpg"
+produces:
+- "application/json"
+
+paths:
+
+  /image/process:
+    post:
+      tags:
+      - "Image Processor"
+      summary: "Process an uploaded image"
+      description: "Processes an uploaded image and prepares it for analysis."
+      operationId: "processImage"
+      consumes: 
+      - "image/png"
+      - "image/jpeg"
+      - "image/jpg"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Image processed successfully"
+          schema:
+            $ref: "#/definitions/ProcessedImageResponse"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /predict/skincondition:
+    post:
+      tags:
+      - "Image Classification"
+      summary: "Predict skin condition"
+      description: "Uses ML to predict skin condition based on the processed image."
+      operationId: "predictSkinCondition"
+      parameters:
+      - in: "body"
+        name: "ProcessedImageData"
+        required: true
+        schema:
+          $ref: "#/definitions/ProcessedImageData"
+      responses:
+        "200":
+          description: "Prediction successful"
+          schema:
+            $ref: "#/definitions/PredictionResponse"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /doctors/recommend:
+    get:
+      tags:
+      - "Doctor Recommendation"
+      summary: "Get list of recommended doctors/specialists"
+      description: "Based on the diagnosed condition, provides a list of recommended doctors."
+      operationId: "getDoctorRecommendation"
+      parameters:
+      - name: "condition"
+        in: "query"
+        type: "string"
+        required: true
+      - name: "location"
+        in: "query"
+        type: "string"
+        required: false
+      - name: "age"
+        in: "query"
+        type: "integer"
+        required: false
+      responses:
+        "200":
+          description: "List of recommended doctors"
+          schema:
+            $ref: "#/definitions/DoctorRecommendationResponse"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /doctors/{doctorId}/appointments:
+    post:
+      tags:
+      - "Appointment"
+      summary: "Book an appointment with a doctor"
+      description: "Allows a patient to book an appointment with a doctor based on available slots."
+      operationId: "bookAppointment"
+      parameters:
+      - name: "doctorId"
+        in: "path"
+        type: "string"
+        required: true
+        description: "The unique identifier of the doctor"
+      - in: "body"
+        name: "AppointmentRequest"
+        required: true
+        schema:
+          $ref: "#/definitions/AppointmentRequest"
+      responses:
+        "200":
+          description: "Appointment booked successfully"
+          schema:
+            $ref: "#/definitions/AppointmentResponse"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+        "409":
+          description: "Appointment slot not available"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /chat/start:
+    post:
+      tags:
+      - "Chat"
+      summary: "Start a chat session"
+      description: "Initiates a chat session between the patient and the doctor."
+      operationId: "startChatSession"
+      parameters:
+      - in: "body"
+        name: "ChatSessionRequest"
+        required: true
+        schema:
+          $ref: "#/definitions/ChatSessionRequest"
+      responses:
+        "200":
+          description: "Chat session started"
+          schema:
+            $ref: "#/definitions/ChatSessionResponse"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /chat/{sessionId}/message:
+    post:
+      tags:
+      - "Chat"
+      summary: "Send a message in a chat session"
+      description: "Sends a message to the doctor or patient in an ongoing chat session."
+      operationId: "sendMessage"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        type: "string"
+        required: true
+        description: "The unique identifier of the chat session"
+      - in: "body"
+        name: "MessageData"
+        required: true
+        schema:
+          $ref: "#/definitions/MessageData"
+      responses:
+        "200":
+          description: "Message sent successfully"
+          schema:
+            $ref: "#/definitions/MessageResponse"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+    
+  /prediction/feedback:
+    post:
+      tags:
+      - "Prediction Feedback"
+      summary: "Submit feedback for a skin condition prediction"
+      description: "Allows a doctor to annotate whether a predicted condition is correct and to provide the correct diagnosis if necessary."
+      operationId: "submitPredictionFeedback"
+      parameters:
+      - in: "body"
+        name: "PredictionFeedbackData"
+        required: true
+        schema:
+          $ref: "#/definitions/PredictionFeedbackData"
+      responses:
+        "200":
+          description: "Feedback submitted successfully"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  ProcessedImageResponse:
+    type: "object"
+    properties:
+      imageUrl:
+        type: "string"
+      analysisResult:
+        type: "string"
+
+  Error:
+    type: "object"
+    required:
+    - "code"
+    - "message"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      message:
+        type: "string"
+
+  ProcessedImageData:
+    type: "object"
+    properties:
+      imageId:
+        type: "string"
+      metadata:
+        type: "object"
+        properties:
+          resolution:
+            type: "string"
+          format:
+            type: "string"
+
+  PredictionResponse:
+    type: "object"
+    properties:
+      condition:
+        type: "string"
+      confidence:
+        type: "number"
+        format: "float"
+
+  DoctorRecommendationResponse:
+    type: "object"
+    properties:
+      doctors:
+        type: "array"
+        items:
+          $ref: "#/definitions/Doctor"
+
+  Doctor:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      name:
+        type: "string"
+      specialty:
+        type: "string"
+
+  AppointmentRequest:
+    type: "object"
+    properties:
+      patientId:
+        type: "string"
+      preferredDate:
+        type: "string"
+      preferredTime:
+        type: "string"
+
+  AppointmentResponse:
+    type: "object"
+    properties:
+      appointmentId:
+        type: "string"
+      confirmedDate:
+        type: "string"
+      confirmedTime:
+        type: "string"
+
+  ChatSessionRequest:
+    type: "object"
+    properties:
+      patientId:
+        type: "string"
+      doctorId:
+        type: "string"
+
+  ChatSessionResponse:
+    type: "object"
+    properties:
+      sessionId:
+        type: "string"
+      startTime:
+        type: "string"
+
+  MessageData:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+      timestamp:
+        type: "string"
+
+  MessageResponse:
+    type: "object"
+    properties:
+      messageId:
+        type: "string"
+      sentTime:
+        type: "string"
+  
+  PredictionFeedbackData:
+    type: "object"
+    required:
+    - "predictionId"
+    - "isCorrect"
+    properties:
+      predictionId:
+        type: "string"
+        description: "The unique identifier of the skin condition prediction"
+      isCorrect:
+        type: "boolean"
+        description: "Whether the prediction is correct or not"
+      correctCondition:
+        type: "string"
+        description: "The correct skin condition diagnosis if the prediction was not correct"
