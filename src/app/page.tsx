@@ -16,12 +16,40 @@ const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/Dev'
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
   const [imagePreview, setImagePreview] = useState('');
+  const [diagnosisReady, setDiagnosisReady] = useState(false); 
   const [diagnosisResult, setDiagnosisResult] = useState({
     condition: null,
     confidence: null,
     error: ''
   });
+  const [recommendedDoctors, setRecommendedDoctors] = useState([]); // Array of doctor objects [{ name: '', specialty: '', location: '' }
   const [isLoading, setIsLoading] = useState(false);
+  const [recommendedDoctorsLoading, setRecommendedDoctorsLoading] = useState(false);
+
+  const [recommendedDoctorsSearch, setRecommendedDoctorsSearch] = useState([]);
+  // Add state variables for search parameters
+  const [searchZipCode, setSearchZipCode] = useState('');
+  const [searchCity, setSearchCity] = useState('');
+  const [searchSpecialty, setSearchSpecialty] = useState('');
+
+  // Handle input changes
+  const handleZipCodeChange = (e: any) => setSearchZipCode(e.target.value);
+  const handleCityChange = (e: any) => setSearchCity(e.target.value);
+  const handleSpecialtyChange = (e: any) => setSearchSpecialty(e.target.value);
+
+  // Function to handle form submission
+  const handleSearch = (e: any) => {
+    e.preventDefault(); // Prevent default form submission behavior
+    // Filter recommendedDoctors based on search parameters
+    const filteredDoctors = recommendedDoctors.filter(doctor => {
+      return (
+        (searchZipCode ? doctor.zip === searchZipCode : true) &&
+        (searchCity ? doctor.city.toLowerCase() === searchCity.toLowerCase() : true) // &&
+        // (searchSpecialty ? doctor.specialties.toLowerCase().includes(searchSpecialty.toLowerCase()) : true)
+      );
+    });
+    setRecommendedDoctorsSearch(filteredDoctors);
+  };
 
   const getTabClass = (tabName: string) => {
     return activeTab === tabName
@@ -63,19 +91,77 @@ export default function Home() {
         console.log("Received response:", data);
 
         setDiagnosisResult(data);
+        setDiagnosisReady(true);
         // Handle the response data
       } else {
         // Handle errors
         console.error("Couldn't get request.");
+
         setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
+        setDiagnosisReady(true);
       }
     } catch (error) {
       // Handle network errors
       setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
+      setDiagnosisReady(true);
     }
   
     setIsLoading(false);
   };
+
+  const getEarliestAvailability = (availabilities: Date[]) => {
+    return availabilities.reduce((earliest, current) => {
+      const currentDate = new Date(current);
+      return earliest < currentDate ? earliest : currentDate;
+    }, new Date(availabilities[0]));
+  };
+  
+  const getRecommendedDoctors = async () => { 
+    if (diagnosisReady) {
+      const diagnosis = diagnosisResult.condition;
+
+      setRecommendedDoctorsLoading(true);
+  
+      try {
+        const response = await fetch(`${apiEndpoint}/doctors/recommend?diagnosis=${diagnosis}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Include other necessary headers
+          },
+          mode: 'cors' // Important for handling CORS
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Received response:", data);
+
+          // Sort the doctors based on their earliest availability
+          const sortedDoctors = data.sort((a, b) => {
+            const earliestA = getEarliestAvailability(a.availabilities).getTime();
+            const earliestB = getEarliestAvailability(b.availabilities).getTime();
+            return earliestA - earliestB;
+          });
+
+          setRecommendedDoctors(sortedDoctors);
+        } else {
+          
+          // Handle HTTP errors
+          console.error("Error fetching recommended doctors.");
+          setRecommendedDoctors([]);
+        }
+      } catch (error) {
+        // Handle network errors
+        console.error("Network error:", error);
+        setRecommendedDoctors([]);
+      }
+    } else {
+      console.error("Diagnosis is not ready yet.");
+    }
+
+    setRecommendedDoctorsLoading(false);
+  }
+  
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -101,19 +187,6 @@ export default function Home() {
                     Find available appointments with doctors based on location and specialty
                   </p>
                   <div className="mt-2 space-y-2">
-                    {/* <Input placeholder="Location" />
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a specialty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="dermatology">Dermatology</SelectItem>
-                          <SelectItem value="general">General Practice</SelectItem>
-                          <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select> */}
                     <Button size="sm" onClick={() => setActiveTab('appointments')}>Search</Button>
                   </div>
                 </CardContent>
@@ -125,7 +198,7 @@ export default function Home() {
                   <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Scheduled Appointments</h2>
                   <p className="text-gray-500 dark:text-gray-400">View your upcoming appointments</p>
                   <div className="mt-2 space-y-2">
-                    <div className="border rounded-lg p-5">
+                    {/* <div className="border rounded-lg p-5">
                       <p className="font-bold">Dr. Jane Doe</p>
                       <p>General Practice</p>
                       <p>Tomorrow at 2:00 PM</p>
@@ -134,7 +207,7 @@ export default function Home() {
                       <p className="font-bold">Dr. John Smith</p>
                       <p>Dermatology</p>
                       <p>Next week at 11:00 AM</p>
-                    </div>
+                    </div> */}
                   </div>
                 </CardContent>
               </Card>
@@ -205,14 +278,22 @@ export default function Home() {
             </div>
           )}
 
-          {diagnosisResult.condition != null ? (
+          {diagnosisReady ? (
+            <>
             <div className="mt-4 bg-green-50 rounded-lg px-4 py-5 border border-gray-200">
               <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis Result</h2>
               <p className="mt-2 max-w-2xl text-sm text-gray-500">
                 Condition: {diagnosisResult.condition}<br />
                 Confidence: {diagnosisResult.confidence}%
               </p>
+
+              <div className="flex items-center mt-5">
+                <Button size="sm" onClick={() => setActiveTab('appointments')}>
+                  Find Recommended Doctors
+                </Button>
+              </div>
             </div>
+           </>
           ) : 
             <div className="mt-12">
               <div className="bg-gray-50 rounded-lg px-4 py-5 border border-gray-200">
@@ -228,76 +309,201 @@ export default function Home() {
       case 'appointments':
         return (
           <>
-          <div className="flex items-center">
-            <Button className="ml-auto" size="sm" onClick={() => setActiveTab('skinDiagnosis')}>
-              Upload Skin Image
+          {!diagnosisReady && (
+            <div className="flex items-center">
+              <Button size="sm" onClick={() => setActiveTab('skinDiagnosis')}>
+                Upload Skin Image
+              </Button>
+            </div>
+          )}
+         
+          {diagnosisReady && (
+            <>
+            <div className="mt-4 bg-green-50 rounded-lg px-4 py-5 border border-gray-200">
+              <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis Result</h2>
+              <p className="mt-2 max-w-2xl text-sm text-gray-500">
+                Condition: {diagnosisResult.condition}<br />
+                Confidence: {diagnosisResult.confidence}%
+              </p>
+            </div>
+
+            <div className="flex items-center">
+            <Button size="sm" onClick={getRecommendedDoctors}>
+              Find Recommended Doctors
             </Button>
-          </div>
+            </div>
+            </>
+          )}
+
+          {recommendedDoctorsLoading && (
+            <div className="flex justify-center items-center">
+              <ClipLoader size={40} />
+            </div>
+          )}
+
+          {/* Display doctor information */}
+          {recommendedDoctors.length > 0 && (
+            <div className="grid grid-cols-2 gap-4">
+              {recommendedDoctors.map((doctor, index) => (
+                <div key={index} className="p-4 border border-gray-200 rounded-lg shadow-lg">
+                  <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
+                  <p className="text-sm text-gray-500">
+                    <strong>{doctor.specialties}</strong><br />
+                    {doctor.address1}, {doctor.address2}<br />
+                    {doctor.city}, {doctor.state}, {doctor.zip}<br />
+                    Phone: {doctor.phone}<br />
+                  </p>
+
+                  <div className="mt-2">
+                    <h4 className="text-sm font-medium text-gray-900"><strong>Focus Areas</strong></h4>
+                    <p className="text-sm text-gray-500">
+                      {doctor.focus.map(focusArea => {
+                        const formattedFocusArea = focusArea.split(' ').map(word => {
+                          const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                          if (capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
+                            return `<strong>${capitalizedWord}</strong>`;
+                          } else {
+                            return capitalizedWord;
+                          }
+                        }).join(' ');
+
+                        return <span dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
+                      }).reduce((prev, curr) => [prev, ', ', curr])}
+                    </p>
+                  </div>
+
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
+                    <select className="form-select mt-1 block w-full rounded-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                      {doctor.availabilities.map((time, timeIndex) => (
+                        <option key={timeIndex} value={time}>
+                          {new Date(time).toLocaleString('en-US', {
+                              year: 'numeric',
+                              month: 'long', 
+                              day: 'numeric', 
+                              hour: 'numeric', 
+                              minute: 'numeric', 
+                              hour12: true 
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+
           <div className="border shadow-sm rounded-lg">
             <Card>
               <CardHeader>
-                <CardTitle>Book an Appointment</CardTitle>
+                <CardTitle>Book Appointment</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP Code</Label>
-                    <Input id="zipCode" placeholder="Enter your ZIP code" required />
+                <form onSubmit={handleSearch}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="zipCode">ZIP Code</Label>
+                      <Input id="zipCode" placeholder="Enter your ZIP code" value={searchZipCode} onChange={handleZipCodeChange} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input id="city" placeholder="Enter your city" value={searchCity} onChange={handleCityChange} required />
+                    </div>
+                    {/* <div className="space-y-2 grid-cols-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Select required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Locations</SelectLabel>
+                            <SelectItem value="location1">Location 1</SelectItem>
+                            <SelectItem value="location2">Location 2</SelectItem>
+                            <SelectItem value="location3">Location 3</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div> */}
+                    <div className="space-y-2">
+                      <Label htmlFor="specialty">Specialty</Label>
+                      <Select required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a specialty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Specialties</SelectLabel>
+                            <SelectItem value="dermatology">Dermatology</SelectItem>
+                            <SelectItem value="general">General Practice</SelectItem>
+                            <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input id="city" placeholder="Enter your city" required />
-                  </div>
-                  <div className="space-y-2 grid-cols-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Select required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Locations</SelectLabel>
-                          <SelectItem value="location1">Location 1</SelectItem>
-                          <SelectItem value="location2">Location 2</SelectItem>
-                          <SelectItem value="location3">Location 3</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    {/* <img
-                      alt="Map"
-                      className="mt-2"
-                      height="300"
-                      src="/placeholder.svg"
-                      style={{
-                        aspectRatio: "300/300",
-                        objectFit: "cover",
-                      }}
-                      width="300"
-                    /> */}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="specialty">Specialty</Label>
-                    <Select required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a specialty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Specialties</SelectLabel>
-                          <SelectItem value="dermatology">Dermatology</SelectItem>
-                          <SelectItem value="general">General Practice</SelectItem>
-                          <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <Button className="w-full mt-4" type="submit">
-                  Find Doctors
-                </Button>
+                  <Button className="w-full mt-4" type="submit">
+                    Find Doctors
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </div>
+
+          {recommendedDoctorsSearch.length > 0 && (
+            <div className="grid grid-cols-2 gap-4">
+              {recommendedDoctorsSearch.map((doctor, index) => (
+                <div key={index} className="p-4 border border-gray-200 rounded-lg shadow-lg">
+                  <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
+                  <p className="text-sm text-gray-500">
+                    <strong>{doctor.specialties}</strong><br />
+                    {doctor.address1}, {doctor.address2}<br />
+                    {doctor.city}, {doctor.state}, {doctor.zip}<br />
+                    Phone: {doctor.phone}<br />
+                  </p>
+
+                  <div className="mt-2">
+                    <h4 className="text-sm font-medium text-gray-900"><strong>Focus Areas</strong></h4>
+                    <p className="text-sm text-gray-500">
+                      {doctor.focus.map(focusArea => {
+                        const formattedFocusArea = focusArea.split(' ').map(word => {
+                          const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                          if (capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
+                            return `<strong>${capitalizedWord}</strong>`;
+                          } else {
+                            return capitalizedWord;
+                          }
+                        }).join(' ');
+
+                        return <span dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
+                      }).reduce((prev, curr) => [prev, ', ', curr])}
+                    </p>
+                  </div>
+
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
+                    <select className="form-select mt-1 block w-full rounded-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                      {doctor.availabilities.map((time, timeIndex) => (
+                        <option key={timeIndex} value={time}>
+                          {new Date(time).toLocaleString('en-US', {
+                              year: 'numeric',
+                              month: 'long', 
+                              day: 'numeric', 
+                              hour: 'numeric', 
+                              minute: 'numeric', 
+                              hour12: true 
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           </>
         );
       case 'chat':
