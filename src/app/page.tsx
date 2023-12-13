@@ -1,15 +1,19 @@
 "use client";
 
-import Image from 'next/image'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CardTitle, CardHeader, CardContent, Card } from "@/components/ui/card"
+import { CardTitle, CardHeader, CardContent, Card, CardDescription, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { SelectValue, SelectTrigger, SelectLabel, SelectItem, SelectGroup, SelectContent, Select } from "@/components/ui/select"
 import { useState } from 'react';
 
 import ClipLoader from 'react-spinners/ClipLoader';
+
+import HomeTab from "@/components/HomeTab";
+import DoctorSignIn from '@/components/DoctorSignIn';
+import PatientSignIn from '@/components/PatientSignIn';
+import PatientRegister from '@/components/PatientRegister';
 
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/Dev';
 
@@ -166,56 +170,7 @@ export default function Home() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'home':
-        return (
-          <>
-          <div className="container mx-auto py-4 px-4 space-y-8 ">
-            <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-grow">
-              <Card className="pt-4">
-                <CardContent>
-                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Upload Image</h2>
-                  <p className="text-gray-500 dark:text-gray-400">Upload a picture of your skin to receive a diagnosis</p>
-                  <div className="mt-2">
-                    <Button size="sm" onClick={() => setActiveTab('skinDiagnosis')}>Upload Image</Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="pt-4 mt-4">
-                <CardContent>
-                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Search Doctors</h2>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Find available appointments with doctors based on location and specialty
-                  </p>
-                  <div className="mt-2 space-y-2">
-                    <Button size="sm" onClick={() => setActiveTab('appointments')}>Search</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="flex-grow">
-              <Card className="pt-4">
-                <CardContent>
-                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Scheduled Appointments</h2>
-                  <p className="text-gray-500 dark:text-gray-400">View your upcoming appointments</p>
-                  <div className="mt-2 space-y-2">
-                    {/* <div className="border rounded-lg p-5">
-                      <p className="font-bold">Dr. Jane Doe</p>
-                      <p>General Practice</p>
-                      <p>Tomorrow at 2:00 PM</p>
-                    </div>
-                    <div className="border rounded-lg p-5">
-                      <p className="font-bold">Dr. John Smith</p>
-                      <p>Dermatology</p>
-                      <p>Next week at 11:00 AM</p>
-                    </div> */}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          </div>
-          </>
-        )
+        return <HomeTab setActiveTab={setActiveTab} />;
       case 'skinDiagnosis':
         return (
           <>
@@ -310,16 +265,25 @@ export default function Home() {
         return (
           <>
           {!diagnosisReady && (
+            <>
+            <div className="bg-red-100 border-b border-red-200 py-2 rounded-lg">
+              <p className="text-center text-sm text-gray-700">
+                Please upload a skin image to get a diagnosis.
+              </p>
+            </div>
             <div className="flex items-center">
               <Button size="sm" onClick={() => setActiveTab('skinDiagnosis')}>
                 Upload Skin Image
               </Button>
             </div>
+            </>
           )}
          
           {diagnosisReady && (
             <>
-            <div className="mt-4 bg-green-50 rounded-lg px-4 py-5 border border-gray-200">
+            <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-10">Diagnosis</h1>
+            <hr />
+            <div className="bg-green-50 rounded-lg px-4 py-5 border border-gray-200">
               <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis Result</h2>
               <p className="mt-2 max-w-2xl text-sm text-gray-500">
                 Condition: {diagnosisResult.condition}<br />
@@ -341,11 +305,13 @@ export default function Home() {
             </div>
           )}
 
+          <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-10">Recommended Doctors</h1>
+          <hr />
           {/* Display doctor information */}
-          {recommendedDoctors.length > 0 && (
+          {recommendedDoctors.length > 0 ? (
             <div className="grid grid-cols-2 gap-4">
               {recommendedDoctors.map((doctor, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg shadow-lg">
+                <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg">
                   <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
                   <p className="text-sm text-gray-500">
                     <strong>{doctor.specialties}</strong><br />
@@ -392,6 +358,13 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="flex justify-center items-center mb-10">
+              <p className="text-center text-sm text-gray-700">
+                No recommended doctors found.
+              </p>
+            </div>
+          
           )}
 
 
@@ -455,7 +428,7 @@ export default function Home() {
           {recommendedDoctorsSearch.length > 0 && (
             <div className="grid grid-cols-2 gap-4">
               {recommendedDoctorsSearch.map((doctor, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg shadow-lg">
+                <div key={index} className="p-20 border border-gray-200 rounded-lg shadow-lg">
                   <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
                   <p className="text-sm text-gray-500">
                     <strong>{doctor.specialties}</strong><br />
@@ -565,6 +538,12 @@ export default function Home() {
           </div>
           </>
         );
+      case 'patientRegister':
+        return <PatientRegister setActiveTab={setActiveTab} />;
+      case 'patientSignIn':
+        return <PatientSignIn setActiveTab={setActiveTab} />;
+      case 'doctorSignIn':
+        return <DoctorSignIn setActiveTab={setActiveTab} />;
       default:
         return null;
     }
@@ -690,6 +669,78 @@ export default function Home() {
                 </svg>
                 Chat with Doctors
               </Link>
+              <Link
+                className={getTabClass('patientRegister')}
+                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                href=""
+                onClick={() => setActiveTab('patientRegister')}
+              >
+                {/* <svg
+                  className=" h-4 w-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17 6.1H3" />
+                  <path d="M21 12.1H3" />
+                  <path d="M15.1 18H3" />
+                </svg> */}
+                Register as Patient
+              </Link>
+              <Link
+                className={getTabClass('patientSignIn')}
+                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                href=""
+                onClick={() => setActiveTab('patientSignIn')}
+              >
+                {/* <svg
+                  className=" h-4 w-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17 6.1H3" />
+                  <path d="M21 12.1H3" />
+                  <path d="M15.1 18H3" />
+                </svg> */}
+                Patient Sign In
+              </Link>
+              <Link
+                className={getTabClass('doctorSignIn')}
+                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                href=""
+                onClick={() => setActiveTab("doctorSignIn")}
+              >
+                {/* <svg
+                  className=" h-4 w-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17 6.1H3" />
+                  <path d="M21 12.1H3" />
+                  <path d="M15.1 18H3" />
+                </svg> */}
+                Doctor Sign In
+              </Link>
             </nav>
           </div>
         </div>
@@ -718,7 +769,7 @@ export default function Home() {
             <h1 className="font-semibold text-lg">Patient Portal</h1>
           </div>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+        <main className="flex flex-1 flex-col gap-4 pl-20 pr-20 pt-10">
           {renderTabContent()}
         </main>
       </div>
