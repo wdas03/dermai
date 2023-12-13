@@ -68,7 +68,7 @@ def scrap_sinai():
     return doctor_records
 
 def scrap_nyu():
-    url = "https://nyulangone.org/api/providers?sort=availability&pageSize=50&page=1&original-criteria=specialist&specialist=dermatologist"
+    url = "https://nyulangone.org/api/providers?sort=availability&pageSize=500&page=1&original-criteria=specialist&specialist=dermatologist"
     html = urlopen(url)
     bs=BeautifulSoup(html,"html.parser")
     doctors_json = json.loads(bs.text)
