@@ -14,17 +14,18 @@ import HomeTab from "@/components/HomeTab";
 import DoctorSignIn from '@/components/DoctorSignIn';
 import PatientSignIn from '@/components/PatientSignIn';
 import PatientRegister from '@/components/PatientRegister';
+import ChatUI from "@/components/ChatUI";
 
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test';
 
-export default function Home() {
+export default function PatientDashboard() {
   const [activeTab, setActiveTab] = useState('home');
   const [imagePreview, setImagePreview] = useState('');
   const [diagnosisReady, setDiagnosisReady] = useState(false); 
   const [diagnosisResult, setDiagnosisResult] = useState({
     condition: null,
     confidence: null,
-    predictions: '',
+    predictions: null,
     error: ''
   });
   const [recommendedDoctors, setRecommendedDoctors] = useState([]); // Array of doctor objects [{ name: '', specialty: '', location: '' }
@@ -78,14 +79,15 @@ export default function Home() {
     if (!imagePreview) return;
   
     setIsLoading(true);
+
+    console.log(JSON.stringify({ image: "yo!" }));
   
     try {
-      console.log(JSON.stringify({ image: imagePreview }));
+      console.log(imagePreview);
       const response = await fetch(`${apiEndpoint}/predict/skincondition`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain',
-          // Include other necessary headers
+          'Content-Type': 'text/plain'
         },
         body: JSON.stringify({ image: imagePreview }),
         mode: 'cors' // This is important for handling CORS
@@ -96,24 +98,19 @@ export default function Home() {
         const data = await response.json();
         console.log("Received response:", data);
 
-        const results = JSON.parse(data['body']);
-
-        setDiagnosisResult({ condition: results['condition'], 
-                             confidence: results['confidence'], 
-                             predictions: JSON.stringify(results['predictions']), 
-                             error: ''});
+        setDiagnosisResult(data);
         setDiagnosisReady(true);
         // Handle the response data
       } else {
         // Handle errors
         console.error("Couldn't get request.");
 
-        setDiagnosisResult({ condition: null, confidence: null, predictions: '', error: 'Failed to get a diagnosis.' });
+        setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
         setDiagnosisReady(true);
       }
     } catch (error) {
       // Handle network errors
-      setDiagnosisResult({ condition: null, confidence: null, predictions: '', error: 'Failed to get a diagnosis.' });
+      setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
       setDiagnosisReady(true);
     }
   
@@ -247,7 +244,7 @@ export default function Home() {
               <p className="mt-2 max-w-2xl text-sm text-gray-500">
                 Condition: {diagnosisResult.condition}<br />
                 Confidence: {diagnosisResult.confidence}%<br />
-                {/* Predictions: {diagnosisResult.predictions} */}
+                Predictions: {diagnosisResult.predictions}
               </p>
 
               <div className="flex items-center mt-5">
@@ -488,64 +485,7 @@ export default function Home() {
           </>
         );
       case 'chat':
-        return (
-          <>
-           <div className="flex flex-col space-y-4 bg-white border shadow-sm rounded-lg p-4">
-            <div className="flex items-start">
-              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-100/40 mr-3">
-                <svg
-                  className=" h-6 w-6"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-              <div className="bg-zinc-100/40 rounded-lg px-4 py-2">
-                <p className="text-sm">Hello, Doctor</p>
-              </div>
-            </div>
-            <div className="flex items-start ml-auto">
-              <div className="bg-zinc-800/40 text-zinc-50 rounded-lg px-4 py-2">
-                <p className="text-sm">Hello, how can I help you today?</p>
-              </div>
-              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-800/40 ml-3">
-                <svg
-                  className=" h-6 w-6"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="flex">
-              <Input className="flex-grow mr-2" placeholder="Enter your message..." />
-              <Button className="w-auto" variant="outline">
-                Send
-              </Button>
-            </div>
-          </div>
-          </>
-        );
+        return <ChatUI />;
       case 'patientRegister':
         return <PatientRegister setActiveTab={setActiveTab} />;
       case 'patientSignIn':
@@ -626,7 +566,7 @@ export default function Home() {
                   <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
                   <circle cx="12" cy="13" r="3" />
                 </svg>
-                Skin Diagnosis
+                Get Skin Diagnosis
               </Link>
               <Link
                 className={getTabClass('appointments')}
@@ -651,7 +591,7 @@ export default function Home() {
                   <line x1="8" x2="8" y1="2" y2="6" />
                   <line x1="3" x2="21" y1="10" y2="10" />
                 </svg>
-                Appointments
+                Find Recommended Doctors
               </Link>
               <Link
                 className={getTabClass('chat')}
@@ -678,10 +618,9 @@ export default function Home() {
                 Chat with Doctors
               </Link>
               <Link
-                className={getTabClass('patientRegister')}
+                className={getTabClass('doctorLogOut')}
                 // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                 href=""
-                onClick={() => setActiveTab('patientRegister')}
               >
                 {/* <svg
                   className=" h-4 w-4"
@@ -699,13 +638,12 @@ export default function Home() {
                   <path d="M21 12.1H3" />
                   <path d="M15.1 18H3" />
                 </svg> */}
-                Register as Patient
+                Uploaded Photos + Diagnoses
               </Link>
               <Link
-                className={getTabClass('patientSignIn')}
+                className={getTabClass('doctorLogOut')}
                 // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                 href=""
-                onClick={() => setActiveTab('patientSignIn')}
               >
                 {/* <svg
                   className=" h-4 w-4"
@@ -723,31 +661,7 @@ export default function Home() {
                   <path d="M21 12.1H3" />
                   <path d="M15.1 18H3" />
                 </svg> */}
-                Patient Sign In
-              </Link>
-              <Link
-                className={getTabClass('doctorSignIn')}
-                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                href=""
-                onClick={() => setActiveTab("doctorSignIn")}
-              >
-                {/* <svg
-                  className=" h-4 w-4"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M17 6.1H3" />
-                  <path d="M21 12.1H3" />
-                  <path d="M15.1 18H3" />
-                </svg> */}
-                Doctor Sign In
+                Log Out
               </Link>
             </nav>
           </div>

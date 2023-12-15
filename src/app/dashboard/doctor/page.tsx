@@ -10,11 +10,10 @@ import { useState } from 'react';
 
 import ClipLoader from 'react-spinners/ClipLoader';
 
-import DoctorSignIn from '@/components/DoctorSignIn';
-import PatientSignIn from '@/components/PatientSignIn';
-import PatientRegister from '@/components/PatientRegister';
+
 import DoctorReviewPhoto from "@/components/DoctorReviewPhoto";
 import DoctorHomeTab from "@/components/DoctorHomeTab";
+import ChatUI from "@/components/ChatUI";
 
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/Dev';
 
@@ -172,6 +171,8 @@ export default function DoctorDashboard() {
     switch (activeTab) {
       case 'home':
         return <DoctorHomeTab setActiveTab={setActiveTab} photosToReviewCount={5} />;
+      case 'chat':
+        return <ChatUI />
       case 'reviewSkinDiagnoses':
         return <DoctorReviewPhoto />;
       default:
@@ -249,6 +250,30 @@ export default function DoctorDashboard() {
                   <circle cx="12" cy="13" r="3" />
                 </svg>
                 Review Skin Diagnoses
+              </Link>
+              <Link
+                className={getTabClass('chat')}
+                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                href=""
+                onClick={() => setActiveTab("chat")}
+              >
+                <svg
+                  className=" h-4 w-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17 6.1H3" />
+                  <path d="M21 12.1H3" />
+                  <path d="M15.1 18H3" />
+                </svg>
+                Chat with Patients
               </Link>
               <Link
                 className={getTabClass('doctorLogOut')}
