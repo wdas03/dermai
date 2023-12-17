@@ -40,6 +40,7 @@ def scrap_sinai():
             if len(data[key]['offices']) > 0:
                 if len(data[key]['offices'][0]['schedules']) > 0:
                     doctorInfo = data[key]
+                    image_url = doctorInfo['headShotUrl']
                     # Get Doctor Focus list
                     doctor_url = doctorInfo['furl']
                     doctor_html = urlopen(doctor_url+"#clinical")
@@ -61,7 +62,8 @@ def scrap_sinai():
                         'phone': doctorInfo['offices'][0]['tel'],
                         'specialties': doctorInfo['specialties'],
                         'availabilities': doctorInfo['offices'][0]['schedules'][0]['allSlots'],
-                        'focus': focus_list
+                        'focus': focus_list,
+                        'image_url': image_url
                     }
                     doctor_records.append(doctorRecord)
 
@@ -77,6 +79,8 @@ def scrap_nyu():
     for doctorInfo in doctors_list:
         doctor_id = doctorInfo['npi']
         focus_list = [condition['title'] for condition in doctorInfo['conditions']]
+        availabilities = doctorInfo['locations'][0]['schedules'][0]['slots'] if doctorInfo['locations'][0]['schedules'][0]['slots'][0][:10] != '+999999999' else None
+        image_url = "https://nyulangone.org" + doctorInfo['thumbImage']
         doctorRecord = {
             'doctorId': 'nyu_' + doctor_id,
             'name': doctorInfo['fullName'],
@@ -87,8 +91,9 @@ def scrap_nyu():
             'zip': doctorInfo['locations'][0]['address']['zip'],
             'phone': doctorInfo['primaryPhone'][0],
             'specialties': [specialty['specialty'] for specialty in doctorInfo['specialties']],
-            'availabilities': doctorInfo['locations'][0]['schedules'][0]['slots'],
-            'focus': focus_list
+            'availabilities': availabilities,
+            'focus': focus_list,
+            'image_url': image_url
         }
         doctor_records.append(doctorRecord)
 
