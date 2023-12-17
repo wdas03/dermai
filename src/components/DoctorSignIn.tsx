@@ -5,12 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+import ClipLoader from 'react-spinners/ClipLoader';
+
 const DoctorSignIn = () => {
     const [doctorId, setDoctorId] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (event: any) => {
+        setLoading(true);
+        
         event.preventDefault();
         setErrorMessage('');
 
@@ -25,6 +30,7 @@ const DoctorSignIn = () => {
             const data = await response.json();
 
             if (data.error) {
+                setLoading(false);
                 setErrorMessage(data.error);
             } else {
                 // Store the doctor data in session storage
@@ -32,10 +38,13 @@ const DoctorSignIn = () => {
 
                 console.log(sessionStorage.getItem('doctorData'));
 
+                setLoading(false);
+
                 // Redirect to the dashboard/doctor route
                 router.push('/dashboard/doctor');
             }
         } catch (error) {
+            setLoading(false);
             setErrorMessage('An error occurred during sign in.');
         }
     };
@@ -63,6 +72,11 @@ const DoctorSignIn = () => {
                         <Button type="submit" className="w-full">Sign in</Button>
                     </CardFooter>
                 </form>
+                {loading && (
+                    <div className="mt-4 text-center">
+                        <ClipLoader size={40} />
+                    </div>
+                )}
                 {errorMessage && (
                     <div className="mt-4 text-red-500 text-center">
                         {errorMessage}

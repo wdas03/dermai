@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import React from 'react';
 import { useState } from 'react';
 
+import ClipLoader from "react-spinners/ClipLoader";
+
 interface Props {
     setActiveTab: (tab: string) => void;
 }
@@ -13,8 +15,11 @@ interface Props {
 const PatientRegister: React.FC<Props> = ({ setActiveTab }) => {
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (event: any) => {
+        setLoading(true);
+
         event.preventDefault();
         const formData = {
             first_name: event.target.first_name.value,
@@ -40,9 +45,13 @@ const PatientRegister: React.FC<Props> = ({ setActiveTab }) => {
                 setMessage('Registration successful! Sign in below.');
                 setIsError(false);
             }
+
+            setLoading(false);
         } catch (error) {
             setMessage('An error occurred.');
             setIsError(true);
+
+            setLoading(false);
         }
     };
 
@@ -78,6 +87,11 @@ const PatientRegister: React.FC<Props> = ({ setActiveTab }) => {
                         <Button type="submit" className="w-full">Sign Up</Button>
                     </CardFooter>
                 </form>
+                {loading && (
+                    <div className="mt-4 text-center">
+                        <ClipLoader size={40} />
+                    </div>
+                )}
                 {message && (
                     <div className={`mt-4 text-center ${isError ? 'text-red-500' : 'text-green-500'}`}>
                         {message}

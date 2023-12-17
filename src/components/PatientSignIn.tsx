@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+import ClipLoader from 'react-spinners/ClipLoader';
+
 interface Props {
     setActiveTab: (tab: string) => void;
 }
@@ -13,9 +15,13 @@ const PatientSignIn: React.FC<Props> = ({ setActiveTab }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
     const router = useRouter();
 
     const handleSubmit = async (event: any) => {
+        setLoading(true);
+
         event.preventDefault();
         setErrorMessage('');
 
@@ -30,6 +36,7 @@ const PatientSignIn: React.FC<Props> = ({ setActiveTab }) => {
             const data = await response.json();
 
             if (data.error) {
+                setLoading(false);
                 setErrorMessage(data.error);
             } else {
                 // Store the relevant data in session storage
@@ -41,6 +48,7 @@ const PatientSignIn: React.FC<Props> = ({ setActiveTab }) => {
                 router.push('/dashboard/patient');
             }
         } catch (error) {
+            setLoading(false);
             setErrorMessage('An error occurred during sign in.');
         }
     };
@@ -65,6 +73,11 @@ const PatientSignIn: React.FC<Props> = ({ setActiveTab }) => {
                         <Button type="submit" className="w-full">Sign in</Button>
                     </CardFooter>
                 </form>
+                {loading && (
+                    <div className="mt-4 text-center">
+                        <ClipLoader size={40} />
+                    </div>
+                )}
                 {errorMessage && (
                     <div className="mt-4 text-red-500 text-center">
                         {errorMessage}
