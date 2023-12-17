@@ -75,6 +75,10 @@ export default function PatientDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedDoctorsLoading, setRecommendedDoctorsLoading] = useState(false);
 
+  const [bookingAppointment, setBookingAppointment] = useState(false);
+
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
+
   const [recommendedDoctorsSearch, setRecommendedDoctorsSearch] = useState<Doctor[]>([]);
 
   // Add state variables for search parameters
@@ -138,6 +142,7 @@ export default function PatientDashboard() {
   }, [activeTab]);
 
   const handleBooking = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    setBookingAppointment(true);
     // Prevent default form submission behavior
     e.preventDefault();
 
@@ -147,13 +152,22 @@ export default function PatientDashboard() {
     const selectedTime = bookingDiv?.querySelector('select')?.value;
     const patientEmail = userData['email'];
 
+    let selectedTimeDateFormat = null;
+    if (selectedTime) {
+      selectedTimeDateFormat = new Date(selectedTime).toISOString();
+    }
+
     const requestData = {
       patientEmail,
       doctorId,
-      appointmentTime: selectedTime
+      appointmentTime: selectedTimeDateFormat
     };
 
     console.log(requestData);
+
+    if (doctorId) {
+      setSelectedDoctorId(doctorId);
+    }
     
     // Send the POST request
     try {
@@ -169,18 +183,28 @@ export default function PatientDashboard() {
       if (response.ok) {
         const responseData = await response.json();
         console.log('Booking successful:', responseData);
+
+        // alert("Booking successful!");
+
+        setBookingAppointment(false);
         setBookingMessage('Booking successful!');
         setIsBookingSuccessful(true);
       } else {
           console.error('Booking failed:', response.statusText);
+
+          setBookingAppointment(false);
           setBookingMessage('Booking failed: ' + response.statusText);
           setIsBookingSuccessful(false);
       }
     } catch (error) {
+        setBookingAppointment(false);
+        
         console.error('Error sending booking request:', error);
         setBookingMessage('Error sending booking request: ' + (error as any).message);
         setIsBookingSuccessful(false);
     }
+
+    setBookingAppointment(false);
   };
 
   // Function to handle form submission
@@ -493,11 +517,11 @@ export default function PatientDashboard() {
             </div>
           )}
 
-          {bookingMessage && (
+          {/* {bookingMessage && (
             <div style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
                 {bookingMessage}
             </div>
-          )}
+          )} */}
 
           {/* Display doctor information */}
           {recommendedDoctors.length > 0 ? (
@@ -580,6 +604,20 @@ export default function PatientDashboard() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Conditionally Render Booking Message for this Doctor */}
+                  {selectedDoctorId === doctor.doctorId && bookingMessage && (
+                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
+                      {bookingMessage}
+                    </div>
+                  )}
+
+                  {bookingAppointment && selectedDoctorId === doctor.doctorId && (
+                    <div className="flex justify-center items-center mt-2">
+                      <ClipLoader size={40} />
+                    </div>
+                  
+                  )}
 
                   <Button className="mt-5" onClick={handleBooking}>
                   Book Appointment
@@ -706,6 +744,19 @@ export default function PatientDashboard() {
                       ))}
                     </select>
                   </div>
+
+                  {selectedDoctorId === doctor.doctorId && bookingMessage && (
+                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
+                      {bookingMessage}
+                    </div>
+                  )}
+
+                  {bookingAppointment && selectedDoctorId === doctor.doctorId && (
+                    <div className="flex justify-center items-center mt-2">
+                      <ClipLoader size={40} />
+                    </div>
+                  
+                  )}
 
                   <Button className="mt-5" onClick={handleBooking}>
                   Book Appointment

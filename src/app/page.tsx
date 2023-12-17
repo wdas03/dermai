@@ -2,19 +2,12 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CardTitle, CardHeader, CardContent, Card, CardDescription, CardFooter } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { SelectValue, SelectTrigger, SelectLabel, SelectItem, SelectGroup, SelectContent, Select } from "@/components/ui/select"
 import { useState } from 'react';
-
-import ClipLoader from 'react-spinners/ClipLoader';
 
 import HomeTab from "@/components/HomeTab";
 import DoctorSignIn from '@/components/DoctorSignIn';
 import PatientSignIn from '@/components/PatientSignIn';
 import PatientRegister from '@/components/PatientRegister';
-import ChatUI from '@/components/ChatUI';
 
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test';
 
