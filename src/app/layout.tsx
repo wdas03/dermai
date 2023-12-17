@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'DermAssist',
+  title: 'DermAI+',
   description: 'Upload a photo, diagnose your skin condition, get treatment recommendations, and get connected with doctors.',
 }
 

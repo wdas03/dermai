@@ -37,7 +37,7 @@ export default function DoctorDashboard() {
       }
 
       console.log(doctorData);
-  }, []);
+  }, [doctorData, router]);
   
 
   const [activeTab, setActiveTab] = useState('home');
