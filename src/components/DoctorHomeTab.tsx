@@ -2,13 +2,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import React from 'react';
 
+import UpcomingDoctorAppointments from "./UpcomingDoctorAppointments";
+
 interface DoctorHomeTabProps {
     setActiveTab: (tab: string) => void;
     // Add other relevant props, like count of photos to review
     photosToReviewCount: number;
+    doctorId: string;
 }
 
-const DoctorHomeTab: React.FC<DoctorHomeTabProps> = ({ setActiveTab, photosToReviewCount }) => {
+const DoctorHomeTab: React.FC<DoctorHomeTabProps> = ({ setActiveTab, photosToReviewCount, doctorId }) => {
+    
     return (
         <>
         <div className="container mx-auto py-4 px-4 space-y-8 ">
@@ -20,7 +24,7 @@ const DoctorHomeTab: React.FC<DoctorHomeTabProps> = ({ setActiveTab, photosToRev
                   <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Review Skin Photos</h2>
                   <p className="text-gray-500 dark:text-gray-400">
                     {photosToReviewCount > 0
-                      ? `You have ${photosToReviewCount} skin photo(s) to review.`
+                      ? `You have skin photo(s) to review.`
                       : "No new skin photos to review."}
                   </p>
                   <div className="mt-2">
@@ -33,10 +37,8 @@ const DoctorHomeTab: React.FC<DoctorHomeTabProps> = ({ setActiveTab, photosToRev
             <div className="flex-grow">
               <Card className="pt-4">
                 <CardContent>
-                  <h2 className="text-lg font-bold text-gray-700 dark:text-gray-300">Scheduled Appointments</h2>
-                  <p className="text-gray-500 dark:text-gray-400">View your upcoming appointments</p>
                   <div className="mt-2 space-y-2">
-                    {/* Add any other relevant content for scheduled appointments */}
+                    <UpcomingDoctorAppointments userId={doctorId}/>
                   </div>
                 </CardContent>
               </Card>

@@ -6,7 +6,7 @@ import { CardTitle, CardHeader, CardContent, Card, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { SelectValue, SelectTrigger, SelectLabel, SelectItem, SelectGroup, SelectContent, Select } from "@/components/ui/select"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import ClipLoader from 'react-spinners/ClipLoader';
 
@@ -14,25 +14,33 @@ import HomeTab from "@/components/HomeTab";
 import DoctorSignIn from '@/components/DoctorSignIn';
 import PatientSignIn from '@/components/PatientSignIn';
 import PatientRegister from '@/components/PatientRegister';
-import ChatUI from "@/components/ChatUI";
+
+import { useRouter } from 'next/navigation';
+import UpcomingPatientAppointments from "@/components/UpcomingPatientAppointments";
+import UploadedPatientPhotos from "@/components/UploadedPatientPhotos";
+
+import Doctor from "@/types/Doctor";
 
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test';
 
 export default function PatientDashboard() {
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState('home');
   const [imagePreview, setImagePreview] = useState('');
   const [diagnosisReady, setDiagnosisReady] = useState(false); 
   const [diagnosisResult, setDiagnosisResult] = useState({
-    condition: null,
-    confidence: null,
-    predictions: null,
+    condition: '',
+    confidence: 0,   // Assuming confidence is a number, initializing it to 0
+    predictions: '',
     error: ''
   });
-  const [recommendedDoctors, setRecommendedDoctors] = useState([]); // Array of doctor objects [{ name: '', specialty: '', location: '' }
+
+  const [recommendedDoctors, setRecommendedDoctors] = useState<Doctor[]>([]); // Array of doctor objects [{ name: '', specialty: '', location: '' }]
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedDoctorsLoading, setRecommendedDoctorsLoading] = useState(false);
 
-  const [recommendedDoctorsSearch, setRecommendedDoctorsSearch] = useState([]);
+  const [recommendedDoctorsSearch, setRecommendedDoctorsSearch] = useState<Doctor[]>([]);
   // Add state variables for search parameters
   const [searchZipCode, setSearchZipCode] = useState('');
   const [searchCity, setSearchCity] = useState('');
@@ -42,6 +50,79 @@ export default function PatientDashboard() {
   const handleZipCodeChange = (e: any) => setSearchZipCode(e.target.value);
   const handleCityChange = (e: any) => setSearchCity(e.target.value);
   const handleSpecialtyChange = (e: any) => setSearchSpecialty(e.target.value);
+
+  const [bookingMessage, setBookingMessage] = useState('');
+  const [isBookingSuccessful, setIsBookingSuccessful] = useState(false);
+
+  const [userData, setUserData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    password: ''
+  });
+
+  const handleLogout = () => {
+      // Clear session storage
+      sessionStorage.clear();
+
+      // Redirect to the home page
+      router.push('/');
+  };
+
+  useEffect(() => {
+      const storedData = sessionStorage.getItem('userData');
+      if (storedData) {
+          setUserData(JSON.parse(storedData));
+      } else {
+        router.push('/');
+      }
+  }, [router]);
+
+  const handleBooking = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent default form submission behavior
+    e.preventDefault();
+
+    // Find the closest parent div of the button and extract the relevant information
+    const bookingDiv = (e.target as HTMLElement).closest('.booking-div');
+    const doctorId = bookingDiv?.getAttribute('data-doctor-id');
+    const selectedTime = bookingDiv?.querySelector('select')?.value;
+    const patientEmail = userData['email'];
+
+    const requestData = {
+      patientEmail,
+      doctorId,
+      appointmentTime: selectedTime
+    };
+
+    console.log(requestData);
+    
+    // Send the POST request
+    try {
+      const response = await fetch('https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test/doctors/book', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+          'mode': 'cors'
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Booking successful:', responseData);
+        setBookingMessage('Booking successful!');
+        setIsBookingSuccessful(true);
+      } else {
+          console.error('Booking failed:', response.statusText);
+          setBookingMessage('Booking failed: ' + response.statusText);
+          setIsBookingSuccessful(false);
+      }
+    } catch (error) {
+        console.error('Error sending booking request:', error);
+        setBookingMessage('Error sending booking request: ' + (error as any).message);
+        setIsBookingSuccessful(false);
+    }
+  };
 
   // Function to handle form submission
   const handleSearch = (e: any) => {
@@ -79,17 +160,19 @@ export default function PatientDashboard() {
     if (!imagePreview) return;
   
     setIsLoading(true);
-
-    console.log(JSON.stringify({ image: "yo!" }));
   
     try {
-      console.log(imagePreview);
+      console.log(JSON.stringify({ image: imagePreview }));
       const response = await fetch(`${apiEndpoint}/predict/skincondition`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain'
+          'Content-Type': 'application/json',
+          // Include other necessary headers
         },
-        body: JSON.stringify({ image: imagePreview }),
+        body: JSON.stringify({ 
+                                image: imagePreview,
+                                user_id: userData.email
+                             }),
         mode: 'cors' // This is important for handling CORS
       });
       
@@ -98,19 +181,22 @@ export default function PatientDashboard() {
         const data = await response.json();
         console.log("Received response:", data);
 
-        setDiagnosisResult(data);
+        setDiagnosisResult({ condition: data['condition'], 
+                             confidence: data['confidence'], 
+                             predictions: JSON.stringify(data['predictions']), 
+                             error: ''});
         setDiagnosisReady(true);
         // Handle the response data
       } else {
         // Handle errors
         console.error("Couldn't get request.");
 
-        setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
+        setDiagnosisResult({ condition: '', confidence: 0, predictions: '', error: 'Failed to get a diagnosis.' });
         setDiagnosisReady(true);
       }
     } catch (error) {
       // Handle network errors
-      setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
+      setDiagnosisResult({ condition: '', confidence: 0, predictions: '', error: 'Failed to get a diagnosis.' });
       setDiagnosisReady(true);
     }
   
@@ -145,7 +231,7 @@ export default function PatientDashboard() {
           console.log("Received response:", data);
 
           // Sort the doctors based on their earliest availability
-          const sortedDoctors = data.sort((a, b) => {
+          const sortedDoctors = data.sort((a : Doctor, b : Doctor) => {
             const earliestA = getEarliestAvailability(a.availabilities).getTime();
             const earliestB = getEarliestAvailability(b.availabilities).getTime();
             return earliestA - earliestB;
@@ -243,8 +329,7 @@ export default function PatientDashboard() {
               <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis Result</h2>
               <p className="mt-2 max-w-2xl text-sm text-gray-500">
                 Condition: {diagnosisResult.condition}<br />
-                Confidence: {diagnosisResult.confidence}%<br />
-                Predictions: {diagnosisResult.predictions}
+                Confidence: {diagnosisResult.confidence}%
               </p>
 
               <div className="flex items-center mt-5">
@@ -296,13 +381,17 @@ export default function PatientDashboard() {
               </p>
             </div>
 
-            <div className="flex items-center">
-            <Button size="sm" onClick={getRecommendedDoctors}>
-              Find Recommended Doctors
-            </Button>
-            </div>
+            
             </>
           )}
+
+          <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-10">Recommended Doctors</h1>
+          <hr />
+          <div className="flex items-center">
+            <Button size="sm" onClick={getRecommendedDoctors}>
+                Find Recommended Doctors
+            </Button>
+          </div>
 
           {recommendedDoctorsLoading && (
             <div className="flex justify-center items-center">
@@ -310,13 +399,25 @@ export default function PatientDashboard() {
             </div>
           )}
 
-          <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-10">Recommended Doctors</h1>
-          <hr />
+          {bookingMessage && (
+            <div style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
+                {bookingMessage}
+            </div>
+          )}
+
           {/* Display doctor information */}
           {recommendedDoctors.length > 0 ? (
+            <>
+            <div className="flex items-center">
+              <Button size="sm" onClick={() => setActiveTab('searchDoctors')}>
+                  Search Recommended Doctors
+              </Button>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
-              {recommendedDoctors.map((doctor, index) => (
-                <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg">
+              
+              {recommendedDoctors.map((doctor : Doctor, index) => (
+                <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg booking-div" data-doctor-id={doctor.doctorId}>
                   <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
                   <p className="text-sm text-gray-500">
                     <strong>{doctor.specialties}</strong><br />
@@ -328,18 +429,18 @@ export default function PatientDashboard() {
                   <div className="mt-2">
                     <h4 className="text-sm font-medium text-gray-900"><strong>Focus Areas</strong></h4>
                     <p className="text-sm text-gray-500">
-                      {doctor.focus.map(focusArea => {
-                        const formattedFocusArea = focusArea.split(' ').map(word => {
+                      {doctor.focus.map((focusArea, index) => {
+                        const formattedFocusArea = focusArea.split(' ').map((word, wordIndex) => {
                           const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                          if (capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
-                            return `<strong>${capitalizedWord}</strong>`;
+                          if (diagnosisResult.condition && capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
+                            return <strong key={wordIndex}>{capitalizedWord}</strong>;
                           } else {
                             return capitalizedWord;
                           }
                         }).join(' ');
 
-                        return <span dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
-                      }).reduce((prev, curr) => [prev, ', ', curr])}
+                        return <span key={index} dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
+                      }).reduce((prev, curr) => <>{[prev, ', ', curr]}</>)}
                     </p>
                   </div>
 
@@ -347,7 +448,7 @@ export default function PatientDashboard() {
                     <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
                     <select className="form-select mt-1 block w-full rounded-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                       {doctor.availabilities.map((time, timeIndex) => (
-                        <option key={timeIndex} value={time}>
+                        <option key={timeIndex}>
                           {new Date(time).toLocaleString('en-US', {
                               year: 'numeric',
                               month: 'long', 
@@ -360,19 +461,27 @@ export default function PatientDashboard() {
                       ))}
                     </select>
                   </div>
+
+                  <Button className="mt-5" onClick={handleBooking}>
+                    Book Appointment
+                  </Button>
                 </div>
               ))}
             </div>
+            </>
           ) : (
             <div className="flex justify-center items-center mb-10">
               <p className="text-center text-sm text-gray-700">
-                No recommended doctors found.
+                
               </p>
             </div>
           
           )}
-
-
+          </>
+        );
+      case 'searchDoctors':
+        return (
+          <>
           <div className="border shadow-sm rounded-lg">
             <Card>
               <CardHeader>
@@ -389,38 +498,6 @@ export default function PatientDashboard() {
                       <Label htmlFor="city">City</Label>
                       <Input id="city" placeholder="Enter your city" value={searchCity} onChange={handleCityChange} required />
                     </div>
-                    {/* <div className="space-y-2 grid-cols-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Select required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Locations</SelectLabel>
-                            <SelectItem value="location1">Location 1</SelectItem>
-                            <SelectItem value="location2">Location 2</SelectItem>
-                            <SelectItem value="location3">Location 3</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div> */}
-                    <div className="space-y-2">
-                      <Label htmlFor="specialty">Specialty</Label>
-                      <Select required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a specialty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Specialties</SelectLabel>
-                            <SelectItem value="dermatology">Dermatology</SelectItem>
-                            <SelectItem value="general">General Practice</SelectItem>
-                            <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                   <Button className="w-full mt-4" type="submit">
                     Find Doctors
@@ -433,7 +510,7 @@ export default function PatientDashboard() {
           {recommendedDoctorsSearch.length > 0 && (
             <div className="grid grid-cols-2 gap-4">
               {recommendedDoctorsSearch.map((doctor, index) => (
-                <div key={index} className="p-20 border border-gray-200 rounded-lg shadow-lg">
+                 <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg booking-div" data-doctor-id={doctor.doctorId}>
                   <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
                   <p className="text-sm text-gray-500">
                     <strong>{doctor.specialties}</strong><br />
@@ -445,18 +522,18 @@ export default function PatientDashboard() {
                   <div className="mt-2">
                     <h4 className="text-sm font-medium text-gray-900"><strong>Focus Areas</strong></h4>
                     <p className="text-sm text-gray-500">
-                      {doctor.focus.map(focusArea => {
-                        const formattedFocusArea = focusArea.split(' ').map(word => {
+                      {doctor.focus.map((focusArea, index) => {
+                        const formattedFocusArea = focusArea.split(' ').map((word, wordIndex) => {
                           const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                          if (capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
-                            return `<strong>${capitalizedWord}</strong>`;
+                          if (diagnosisResult.condition && capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
+                            return <strong key={wordIndex}>{capitalizedWord}</strong>;
                           } else {
                             return capitalizedWord;
                           }
                         }).join(' ');
 
-                        return <span dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
-                      }).reduce((prev, curr) => [prev, ', ', curr])}
+                        return <span key={index} dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
+                      }).reduce((prev, curr) => <>{[prev, ', ', curr]}</>)}
                     </p>
                   </div>
 
@@ -464,7 +541,7 @@ export default function PatientDashboard() {
                     <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
                     <select className="form-select mt-1 block w-full rounded-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                       {doctor.availabilities.map((time, timeIndex) => (
-                        <option key={timeIndex} value={time}>
+                        <option key={timeIndex}>
                           {new Date(time).toLocaleString('en-US', {
                               year: 'numeric',
                               month: 'long', 
@@ -477,21 +554,26 @@ export default function PatientDashboard() {
                       ))}
                     </select>
                   </div>
-                </div>
+
+                  <Button className="mt-5" onClick={handleBooking}>
+                    Book Appointment
+                  </Button>
+               </div>
               ))}
             </div>
           )}
-
           </>
         );
       case 'chat':
-        return <ChatUI />;
+        return <UpcomingPatientAppointments userId={userData.email} />;
+      case 'uploadedPhotos':
+        return <UploadedPatientPhotos userId={userData.email} />;
       case 'patientRegister':
         return <PatientRegister setActiveTab={setActiveTab} />;
       case 'patientSignIn':
         return <PatientSignIn setActiveTab={setActiveTab} />;
       case 'doctorSignIn':
-        return <DoctorSignIn setActiveTab={setActiveTab} />;
+        return <DoctorSignIn />;
       default:
         return null;
     }
@@ -522,9 +604,14 @@ export default function PatientDashboard() {
           </div>
           <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-4 text-sm font-medium">
+            {userData && userData.first_name && userData.last_name && (
+              <div className="flex flex-col pb-5 pl-5">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{userData.first_name} {userData.last_name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Patient</p>
+              </div>
+            )}
             <Link
                 className={getTabClass('home')}
-                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                 href=""
                 onClick={() => setActiveTab('home')}
               >
@@ -547,7 +634,6 @@ export default function PatientDashboard() {
               </Link>
               <Link
                 className={getTabClass('skinDiagnosis')}
-                // className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-2 text-zinc-900  transition-all hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:text-zinc-50"
                 href=""
                 onClick={() => setActiveTab('skinDiagnosis')}
               >
@@ -570,11 +656,33 @@ export default function PatientDashboard() {
               </Link>
               <Link
                 className={getTabClass('appointments')}
-                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                 href=""
                 onClick={() => setActiveTab('appointments')}
               >
                 <svg
+                  className=" h-4 w-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17 6.1H3" />
+                  <path d="M21 12.1H3" />
+                  <path d="M15.1 18H3" />
+                </svg>
+                Find Recommended Doctors
+              </Link>
+              <Link
+                className={getTabClass('searchDoctors')}
+                href=""
+                onClick={() => setActiveTab("searchDoctors")}
+              >
+                 <svg
                   className=" h-4 w-4"
                   fill="none"
                   height="24"
@@ -591,11 +699,10 @@ export default function PatientDashboard() {
                   <line x1="8" x2="8" y1="2" y2="6" />
                   <line x1="3" x2="21" y1="10" y2="10" />
                 </svg>
-                Find Recommended Doctors
+                Search Recommended Doctors
               </Link>
               <Link
                 className={getTabClass('chat')}
-                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                 href=""
                 onClick={() => setActiveTab("chat")}
               >
@@ -615,54 +722,24 @@ export default function PatientDashboard() {
                   <path d="M21 12.1H3" />
                   <path d="M15.1 18H3" />
                 </svg>
-                Chat with Doctors
+                Upcoming Appointments
               </Link>
+              
               <Link
-                className={getTabClass('doctorLogOut')}
-                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                className={getTabClass('uploadedPhotos')}
                 href=""
+                onClick={() => setActiveTab('uploadedPhotos')}
               >
-                {/* <svg
-                  className=" h-4 w-4"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M17 6.1H3" />
-                  <path d="M21 12.1H3" />
-                  <path d="M15.1 18H3" />
-                </svg> */}
                 Uploaded Photos + Diagnoses
               </Link>
-              <Link
-                className={getTabClass('doctorLogOut')}
-                // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                href=""
+
+              <Button
+                size="sm"
+                className="w-32 mt-5"
+                onClick={handleLogout}
               >
-                {/* <svg
-                  className=" h-4 w-4"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M17 6.1H3" />
-                  <path d="M21 12.1H3" />
-                  <path d="M15.1 18H3" />
-                </svg> */}
                 Log Out
-              </Link>
+              </Button>
             </nav>
           </div>
         </div>

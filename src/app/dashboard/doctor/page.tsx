@@ -2,58 +2,46 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CardTitle, CardHeader, CardContent, Card, CardDescription, CardFooter } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { SelectValue, SelectTrigger, SelectLabel, SelectItem, SelectGroup, SelectContent, Select } from "@/components/ui/select"
-import { useState } from 'react';
-
-import ClipLoader from 'react-spinners/ClipLoader';
-
+import { useState, useEffect } from 'react';
 
 import DoctorReviewPhoto from "@/components/DoctorReviewPhoto";
 import DoctorHomeTab from "@/components/DoctorHomeTab";
 import ChatUI from "@/components/ChatUI";
 
+import { useRouter } from 'next/navigation';
+import UpcomingDoctorAppointments from "@/components/UpcomingDoctorAppointments";
+
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/Dev';
 
 export default function DoctorDashboard() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [imagePreview, setImagePreview] = useState('');
-  const [diagnosisReady, setDiagnosisReady] = useState(false); 
-  const [diagnosisResult, setDiagnosisResult] = useState({
-    condition: null,
-    confidence: null,
-    error: ''
+  const router = useRouter();
+
+  const [doctorData, setDoctorData] = useState({
+    'doctorId': '',
+    'name': ''
   });
-  const [recommendedDoctors, setRecommendedDoctors] = useState([]); // Array of doctor objects [{ name: '', specialty: '', location: '' }
-  const [isLoading, setIsLoading] = useState(false);
-  const [recommendedDoctorsLoading, setRecommendedDoctorsLoading] = useState(false);
 
-  const [recommendedDoctorsSearch, setRecommendedDoctorsSearch] = useState([]);
-  // Add state variables for search parameters
-  const [searchZipCode, setSearchZipCode] = useState('');
-  const [searchCity, setSearchCity] = useState('');
-  const [searchSpecialty, setSearchSpecialty] = useState('');
+  const handleLogout = () => {
+      // Clear session storage
+      sessionStorage.clear();
 
-  // Handle input changes
-  const handleZipCodeChange = (e: any) => setSearchZipCode(e.target.value);
-  const handleCityChange = (e: any) => setSearchCity(e.target.value);
-  const handleSpecialtyChange = (e: any) => setSearchSpecialty(e.target.value);
-
-  // Function to handle form submission
-  const handleSearch = (e: any) => {
-    e.preventDefault(); // Prevent default form submission behavior
-    // Filter recommendedDoctors based on search parameters
-    const filteredDoctors = recommendedDoctors.filter(doctor => {
-      return (
-        (searchZipCode ? doctor.zip === searchZipCode : true) &&
-        (searchCity ? doctor.city.toLowerCase() === searchCity.toLowerCase() : true) // &&
-        // (searchSpecialty ? doctor.specialties.toLowerCase().includes(searchSpecialty.toLowerCase()) : true)
-      );
-    });
-    setRecommendedDoctorsSearch(filteredDoctors);
+      // Redirect to the home page
+      router.push('/');
   };
+
+  useEffect(() => {
+      const storedData = sessionStorage.getItem('doctorData');
+      if (storedData) {
+          setDoctorData(JSON.parse(storedData));
+      } else {
+        router.push('/');
+      }
+
+      console.log(doctorData);
+  }, []);
+  
+
+  const [activeTab, setActiveTab] = useState('home');
 
   const getTabClass = (tabName: string) => {
     return activeTab === tabName
@@ -61,120 +49,15 @@ export default function DoctorDashboard() {
       : "flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50";
   };
 
-  // Handle image file change
-  const handleImageChange = (e: any) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const analyzeImage = async () => {
-    if (!imagePreview) return;
-  
-    setIsLoading(true);
-  
-    try {
-      const response = await fetch(`${apiEndpoint}/predict/skincondition`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Include other necessary headers
-        },
-        // body: JSON.stringify({ image: imagePreview }),
-        mode: 'cors' // This is important for handling CORS
-      });
-      
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Received response:", data);
-
-        setDiagnosisResult(data);
-        setDiagnosisReady(true);
-        // Handle the response data
-      } else {
-        // Handle errors
-        console.error("Couldn't get request.");
-
-        setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
-        setDiagnosisReady(true);
-      }
-    } catch (error) {
-      // Handle network errors
-      setDiagnosisResult({ condition: null, confidence: null, error: 'Failed to get a diagnosis.' });
-      setDiagnosisReady(true);
-    }
-  
-    setIsLoading(false);
-  };
-
-  const getEarliestAvailability = (availabilities: Date[]) => {
-    return availabilities.reduce((earliest, current) => {
-      const currentDate = new Date(current);
-      return earliest < currentDate ? earliest : currentDate;
-    }, new Date(availabilities[0]));
-  };
-  
-  const getRecommendedDoctors = async () => { 
-    if (diagnosisReady) {
-      const diagnosis = diagnosisResult.condition;
-
-      setRecommendedDoctorsLoading(true);
-  
-      try {
-        const response = await fetch(`${apiEndpoint}/doctors/recommend?diagnosis=${diagnosis}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // Include other necessary headers
-          },
-          mode: 'cors' // Important for handling CORS
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Received response:", data);
-
-          // Sort the doctors based on their earliest availability
-          const sortedDoctors = data.sort((a, b) => {
-            const earliestA = getEarliestAvailability(a.availabilities).getTime();
-            const earliestB = getEarliestAvailability(b.availabilities).getTime();
-            return earliestA - earliestB;
-          });
-
-          setRecommendedDoctors(sortedDoctors);
-        } else {
-          
-          // Handle HTTP errors
-          console.error("Error fetching recommended doctors.");
-          setRecommendedDoctors([]);
-        }
-      } catch (error) {
-        // Handle network errors
-        console.error("Network error:", error);
-        setRecommendedDoctors([]);
-      }
-    } else {
-      console.error("Diagnosis is not ready yet.");
-    }
-
-    setRecommendedDoctorsLoading(false);
-  }
-  
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'home':
-        return <DoctorHomeTab setActiveTab={setActiveTab} photosToReviewCount={5} />;
+        return <DoctorHomeTab setActiveTab={setActiveTab} photosToReviewCount={5} doctorId={doctorData.doctorId} />;
       case 'chat':
-        return <ChatUI />
+        return <UpcomingDoctorAppointments userId={doctorData.doctorId} />;
       case 'reviewSkinDiagnoses':
-        return <DoctorReviewPhoto />;
+        return <DoctorReviewPhoto doctorId={doctorData.doctorId} />;
       default:
         return null;
     }
@@ -205,6 +88,13 @@ export default function DoctorDashboard() {
           </div>
           <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-4 text-sm font-medium">
+            {doctorData && doctorData.name && (
+              <div className="flex flex-col pb-5 pl-5">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{doctorData.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Doctor</p>
+              </div>
+            )}
+
             <Link
                 className={getTabClass('home')}
                 // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
@@ -273,31 +163,17 @@ export default function DoctorDashboard() {
                   <path d="M21 12.1H3" />
                   <path d="M15.1 18H3" />
                 </svg>
-                Chat with Patients
+                Upcoming Appointments
               </Link>
-              <Link
-                className={getTabClass('doctorLogOut')}
+              <Button
+                size="sm"
+                className="w-32 mt-5"
                 // className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                href=""
+               
+                onClick={handleLogout}
               >
-                {/* <svg
-                  className=" h-4 w-4"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M17 6.1H3" />
-                  <path d="M21 12.1H3" />
-                  <path d="M15.1 18H3" />
-                </svg> */}
                 Log Out
-              </Link>
+              </Button>
             </nav>
           </div>
         </div>
@@ -323,7 +199,7 @@ export default function DoctorDashboard() {
             <span className="sr-only">Home</span>
           </Link>
           <div className="w-full flex-1">
-            <h1 className="font-semibold text-lg">Patient Portal</h1>
+            <h1 className="font-semibold text-lg">Doctor Portal</h1>
           </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 pl-20 pr-20 pt-10">
