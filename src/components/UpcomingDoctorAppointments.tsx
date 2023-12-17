@@ -82,17 +82,22 @@ export default function UpcomingDoctorAppointments({ userId }: { userId: string 
             </div>
             : <><h1 className="text-lg font-bold">Upcoming Appointments</h1> 
                 <p>Join these chat rooms 10 minutes before your scheduled call.</p>
-                {appointments.map((appointment) => (
-                    <div key={appointment.appointmentId} className="flex justify-between items-center bg-white border shadow-sm rounded-lg p-4 mb-4">
-                    <div>
-                        <h3 className="text-lg font-medium">{appointment.patientInfo.first_name} {appointment.patientInfo.last_name}</h3> 
-                        <p className="text-sm">{new Date(appointment.appointmentTime).toLocaleString()}</p>
-                    </div>
-                    <Button onClick={() => joinChat(appointment.appointmentId)}>
-                        Join Chat
-                    </Button>
-                    </div>
-                ))}
+                {appointments && appointments.length === 0 ? 
+                    (
+                        <p className="font-bold">No upcoming appointments.</p>
+                    ) :
+                    (appointments.map((appointment) => (
+                        <div key={appointment.appointmentId} className="flex justify-between items-center bg-white border shadow-sm rounded-lg p-4 mb-4">
+                        <div>
+                            <h3 className="text-lg font-medium">{appointment.patientInfo.first_name} {appointment.patientInfo.last_name}</h3> 
+                            <p className="text-sm">{new Date(appointment.appointmentTime).toLocaleString()}</p>
+                        </div>
+                        <Button onClick={() => joinChat(appointment.appointmentId)}>
+                            Join Chat
+                        </Button>
+                        </div>
+                    )))
+                }
                 </>
         }
       </>

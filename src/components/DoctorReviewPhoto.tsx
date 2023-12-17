@@ -119,10 +119,12 @@ const confirmDiagnosis = async () => {
     }
 
     // Navigate to next photo
-    if (currentPhotoIndex < photos.length - 1) {
-        setCurrentPhotoIndex(currentPhotoIndex + 1);
-        setSelectedDiagnosis('');
-        setAdditionalComments('');
+    if (photos) {
+      if (currentPhotoIndex < photos.length - 1) {
+          setCurrentPhotoIndex(currentPhotoIndex + 1);
+          setSelectedDiagnosis('');
+          setAdditionalComments('');
+      }
     }
 
     setLoading(false);
@@ -134,8 +136,10 @@ const confirmDiagnosis = async () => {
 
   // Navigation functions
   const goToNextPhoto = () => {
-      if (currentPhotoIndex < photos.length - 1) {
-          setCurrentPhotoIndex(currentPhotoIndex + 1);
+      if (photos) {
+        if (currentPhotoIndex < photos.length - 1) {
+            setCurrentPhotoIndex(currentPhotoIndex + 1);
+        }
       }
   };
   const goToPreviousPhoto = () => {
@@ -162,7 +166,7 @@ const confirmDiagnosis = async () => {
 
     if (!photos) {
       return (
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center font-bold">
           No photos to review at this time.
         </div>
       );

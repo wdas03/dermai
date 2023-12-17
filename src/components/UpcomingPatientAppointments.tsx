@@ -71,18 +71,27 @@ export default function UpcomingPatientAppointments({ userId }: { userId: string
             </div>
             : <><h1 className="text-lg font-bold">Upcoming Appointments</h1> 
                 <p>Join these chat rooms 10 minutes before your scheduled call.</p>
-                {appointments.map((appointment) => (
-                    <div key={appointment.appointmentId} className="flex justify-between items-center bg-white border shadow-sm rounded-lg p-8 mb-4">
-                    <div>
-                        <img src={appointment.doctorInfo.image_url} className="w-20 h-20 mb-5 rounded-full border shadow-lg border-black-400" />
-                        <h3 className="text-lg font-medium">{appointment.doctorInfo.name}</h3> 
-                        <p className="text-sm">{new Date(appointment.appointmentTime).toLocaleString()}</p>
-                    </div>
-                    <Button onClick={() => joinChat(appointment.appointmentId)}>
-                        Join Chat
-                    </Button>
-                    </div>
-                ))}
+                {
+                    appointments && appointments.length === 0
+                        ? (
+                            <p className="font-bold">No upcoming appointments.</p>
+                        )
+                        : (
+                            appointments.map((appointment) => (
+                                <div key={appointment.appointmentId} className="flex justify-between items-center bg-white border shadow-sm rounded-lg p-8 mb-4">
+                                    <div>
+                                    <img src={appointment.doctorInfo.image_url} className="w-20 h-20 mb-5 rounded-full border shadow-lg border-black-400" alt="Doctor" />
+                                    <h3 className="text-lg font-medium">{appointment.doctorInfo.name}</h3> 
+                                    <p className="text-sm">{new Date(appointment.appointmentTime).toLocaleString()}</p>
+                                    </div>
+                                    <Button onClick={() => joinChat(appointment.appointmentId)}>
+                                    Join Chat
+                                    </Button>
+                                </div>
+                            ))
+                        )
+                    }
+
                 </>
         }
       </>

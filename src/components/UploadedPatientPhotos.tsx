@@ -43,7 +43,13 @@ export default function UploadedPatientPhotos({ userId }: { userId: string }) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {uploadedPhotos.map((photo, index) => {
+              {uploadedPhotos && uploadedPhotos.length == 0 && (
+                <div className="flex justify-center items-center">
+                    <p className="text-xl text-gray-600">No photos uploaded yet</p>
+                </div>
+              )}
+
+              {uploadedPhotos && uploadedPhotos.map((photo, index) => {
                 // Parse the mlDiagnosis JSON string
                 let diagnosis : MLDiagnosis;
                 try {
