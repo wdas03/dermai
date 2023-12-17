@@ -1,5 +1,6 @@
 export default interface Doctor {
     doctorId: string;
+    image_url: string;
     name: string;
     address1: string;
     address2: string;

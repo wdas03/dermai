@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { CardTitle, CardHeader, CardContent, Card, CardDescription, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { SelectValue, SelectTrigger, SelectLabel, SelectItem, SelectGroup, SelectContent, Select } from "@/components/ui/select"
 import { useState, useEffect } from 'react';
 
 import ClipLoader from 'react-spinners/ClipLoader';
@@ -21,10 +20,41 @@ import UploadedPatientPhotos from "@/components/UploadedPatientPhotos";
 
 import Doctor from "@/types/Doctor";
 
+import React from 'react';
+
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test';
 
 export default function PatientDashboard() {
   const router = useRouter();
+
+  const labels_keywords : {[key: string]: string[]} = {
+    'actinic keratoses': [
+        'actinic keratoses', "actinic keratosis", "keratosis", "sun", "aging", "skin cancer"
+    ],
+    'basal cell carcinoma': [
+         'basal cell carcinoma', "basal cell cancer", "skin cancer", "mole", "malignant tumor"
+    ],
+    'benign keratosis-like lesions': [
+        "seborrheic keratosis", "skin growth", "epithelial cyst", "tumor", 
+        "lesion", "dermal growth"
+    ],
+    'dermatofibroma': [
+        "dermatofibroma", "fibrous histiocytoma", "lesion", "fibroma", "skin fibroma", 
+        "cutaneous fibrous tumor", "benign fibroma", "nodule", "dermal tumor"
+    ],
+    'melanocytic nevi': [
+        "melanocytic nevus", "mole", "nevus", "pigmented nevus", "skin mole", 
+        "benign nevus", "dysplastic nevus", "mole check", "melanoma screening"
+    ],
+    'melanoma': [
+        "melanoma", "skin cancer", "malignant melanoma", "hyperpigmentation", "malignant tumor", 
+        "cutaneous melanoma", "malignant skin lesion", "advanced melanoma", "metastatic melanoma"
+    ],
+    'vascular lesions': [
+        "vascular lesion", "hemangioma", "angiomas", "lesion", "vascular tumor", 
+        "blood vessel lesion", "vascular anomaly", "vascular birthmark", "capillary hemangioma", "vasculitis"
+    ]
+  };
 
   const [activeTab, setActiveTab] = useState('home');
   const [imagePreview, setImagePreview] = useState('');
@@ -36,20 +66,24 @@ export default function PatientDashboard() {
     error: ''
   });
 
+  const conditionKey = diagnosisResult.condition.toLowerCase();
+  const diagnosisRelevantKeywords = conditionKey in labels_keywords 
+      ? labels_keywords[conditionKey] 
+      : null;
+
   const [recommendedDoctors, setRecommendedDoctors] = useState<Doctor[]>([]); // Array of doctor objects [{ name: '', specialty: '', location: '' }]
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedDoctorsLoading, setRecommendedDoctorsLoading] = useState(false);
 
   const [recommendedDoctorsSearch, setRecommendedDoctorsSearch] = useState<Doctor[]>([]);
+
   // Add state variables for search parameters
   const [searchZipCode, setSearchZipCode] = useState('');
   const [searchCity, setSearchCity] = useState('');
-  const [searchSpecialty, setSearchSpecialty] = useState('');
 
   // Handle input changes
   const handleZipCodeChange = (e: any) => setSearchZipCode(e.target.value);
   const handleCityChange = (e: any) => setSearchCity(e.target.value);
-  const handleSpecialtyChange = (e: any) => setSearchSpecialty(e.target.value);
 
   const [bookingMessage, setBookingMessage] = useState('');
   const [isBookingSuccessful, setIsBookingSuccessful] = useState(false);
@@ -60,6 +94,27 @@ export default function PatientDashboard() {
     email: '',
     password: ''
   });
+
+  const [currentDiagnoses, setCurrentDiagnoses] = useState<string[]>([]);
+
+  const getDiagnoses = async () => {
+      try {
+          const response = await fetch('https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test/patients/getDiagnoses', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  userId: userData.email
+              })
+          });
+
+          const data = await response.json();
+          setCurrentDiagnoses(data);
+      } catch (error) {
+          console.log(error);
+      }
+  };
 
   const handleLogout = () => {
       // Clear session storage
@@ -77,6 +132,10 @@ export default function PatientDashboard() {
         router.push('/');
       }
   }, [router]);
+
+  useEffect(() => {
+    getDiagnoses();
+  }, [activeTab]);
 
   const handleBooking = async (e: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent default form submission behavior
@@ -131,8 +190,7 @@ export default function PatientDashboard() {
     const filteredDoctors = recommendedDoctors.filter(doctor => {
       return (
         (searchZipCode ? doctor.zip === searchZipCode : true) &&
-        (searchCity ? doctor.city.toLowerCase() === searchCity.toLowerCase() : true) // &&
-        // (searchSpecialty ? doctor.specialties.toLowerCase().includes(searchSpecialty.toLowerCase()) : true)
+        (searchCity ? doctor.city.toLowerCase() === searchCity.toLowerCase() : true)
       );
     });
     setRecommendedDoctorsSearch(filteredDoctors);
@@ -140,8 +198,8 @@ export default function PatientDashboard() {
 
   const getTabClass = (tabName: string) => {
     return activeTab === tabName
-      ? "flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-900 bg-zinc-100 transition-all hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:text-zinc-50"
-      : "flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50";
+      ? "flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-900 font-normal bg-zinc-100 transition-all hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:text-zinc-50"
+      : "flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-500 font-normal transition-all hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50";
   };
 
   // Handle image file change
@@ -220,8 +278,7 @@ export default function PatientDashboard() {
         const response = await fetch(`${apiEndpoint}/doctors/recommend?diagnosis=${diagnosis}`, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            // Include other necessary headers
+            'Content-Type': 'application/json'
           },
           mode: 'cors' // Important for handling CORS
         });
@@ -230,14 +287,23 @@ export default function PatientDashboard() {
           const data = await response.json();
           console.log("Received response:", data);
 
+          console.log(data);
+
+          // setRecommendedDoctors(data);
           // Sort the doctors based on their earliest availability
           const sortedDoctors = data.sort((a : Doctor, b : Doctor) => {
-            const earliestA = getEarliestAvailability(a.availabilities).getTime();
-            const earliestB = getEarliestAvailability(b.availabilities).getTime();
-            return earliestA - earliestB;
+            if (a.availabilities && b.availabilities) {
+              const earliestA = getEarliestAvailability(a.availabilities).getTime();
+              const earliestB = getEarliestAvailability(b.availabilities).getTime();
+              return earliestA - earliestB;
+            }
+
+            return -1;
           });
 
           setRecommendedDoctors(sortedDoctors);
+
+          console.log("Recommended doctors:", sortedDoctors);
         } else {
           
           // Handle HTTP errors
@@ -260,7 +326,20 @@ export default function PatientDashboard() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeTab setActiveTab={setActiveTab} />;
+        return (
+          <>
+              <HomeTab setActiveTab={setActiveTab} />
+              <div className="container mx-auto">
+                <Card className="pt-4 w-full mt-5"> {/* Adjust width as needed */}
+                    <CardContent>
+                        <div className="mt-2 space-y-2">
+                            <UpcomingPatientAppointments userId={userData.email}/>
+                        </div>
+                    </CardContent>
+                </Card>
+             </div>
+          </>
+        );
       case 'skinDiagnosis':
         return (
           <>
@@ -325,11 +404,13 @@ export default function PatientDashboard() {
 
           {diagnosisReady ? (
             <>
-            <div className="mt-4 bg-green-50 rounded-lg px-4 py-5 border border-gray-200">
+            <div className="mt-4 bg-green-50 rounded-lg px-4 py-5 border border-gray-200 mb-10">
               <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis Result</h2>
               <p className="mt-2 max-w-2xl text-sm text-gray-500">
                 Condition: {diagnosisResult.condition}<br />
-                Confidence: {diagnosisResult.confidence}%
+                {diagnosisResult.confidence !== 0 && (
+                  <>Confidence: {diagnosisResult.confidence}%</>
+                )}
               </p>
 
               <div className="flex items-center mt-5">
@@ -340,7 +421,7 @@ export default function PatientDashboard() {
             </div>
            </>
           ) : 
-            <div className="mt-12">
+            <div className="mt-12 mb-12">
               <div className="bg-gray-50 rounded-lg px-4 py-5 border border-gray-200">
                 <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis</h2>
                 <p className="mt-2 max-w-2xl text-sm text-gray-500">
@@ -367,23 +448,36 @@ export default function PatientDashboard() {
               </Button>
             </div>
             </>
-          )}
+          )} 
          
           {diagnosisReady && (
             <>
-            <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-10">Diagnosis</h1>
+            <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-5">Diagnosis</h1>
             <hr />
             <div className="bg-green-50 rounded-lg px-4 py-5 border border-gray-200">
               <h2 className="text-lg leading-6 font-medium text-gray-900">Diagnosis Result</h2>
               <p className="mt-2 max-w-2xl text-sm text-gray-500">
                 Condition: {diagnosisResult.condition}<br />
-                Confidence: {diagnosisResult.confidence}%
+                {diagnosisResult.confidence !== 0 && (
+                  <>Confidence: {diagnosisResult.confidence}%</>
+                )}
               </p>
             </div>
-
-            
             </>
           )}
+
+          <p className="mt-5">Or select from an existing diagnosis: </p>
+            <select 
+                onChange={(e) => {
+                    console.log(e.target.value);
+                    setDiagnosisResult({condition: e.target.value, confidence: 0, predictions: '', error: ''});
+                    setDiagnosisReady(true);
+                }}
+            >
+                {currentDiagnoses.map((diagnosis, index) => (
+                    <option key={index}>{diagnosis}</option>
+                ))}
+            </select>  
 
           <h1 className="text-2xl leading-6 font-medium text-gray-900 mt-10">Recommended Doctors</h1>
           <hr />
@@ -414,13 +508,27 @@ export default function PatientDashboard() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-10">
               
               {recommendedDoctors.map((doctor : Doctor, index) => (
                 <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg booking-div" data-doctor-id={doctor.doctorId}>
+                  
+                  {doctor.image_url !== "https://nyulangone.org" && (<img 
+                      width="200" 
+                      height="200" 
+                      alt="" 
+                      src={doctor.image_url} 
+                      className="mb-5 rounded-lg border border-gray-200 shadow-lg" 
+                  />
+                  )}
+
                   <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
                   <p className="text-sm text-gray-500">
-                    <strong>{doctor.specialties}</strong><br />
+                  <strong>
+                      {Array.isArray(doctor.specialties) 
+                          ? doctor.specialties.join(', ') 
+                          : doctor.specialties}
+                  </strong><br />
                     {doctor.address1}, {doctor.address2}<br />
                     {doctor.city}, {doctor.state}, {doctor.zip}<br />
                     Phone: {doctor.phone}<br />
@@ -429,21 +537,32 @@ export default function PatientDashboard() {
                   <div className="mt-2">
                     <h4 className="text-sm font-medium text-gray-900"><strong>Focus Areas</strong></h4>
                     <p className="text-sm text-gray-500">
-                      {doctor.focus.map((focusArea, index) => {
-                        const formattedFocusArea = focusArea.split(' ').map((word, wordIndex) => {
-                          const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                          if (diagnosisResult.condition && capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
-                            return <strong key={wordIndex}>{capitalizedWord}</strong>;
-                          } else {
-                            return capitalizedWord;
-                          }
-                        }).join(' ');
+                        {doctor.focus.map((focusArea, index) => {
+                            const formattedFocusArea = focusArea.split(' ').map((word, wordIndex) => {
+                                const lowerCaseWord = word.toLowerCase();
+                                const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 
-                        return <span key={index} dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
-                      }).reduce((prev, curr) => <>{[prev, ', ', curr]}</>)}
+                                // Check if the word (in lowercase) is in the diagnosisRelevantKeywords list
+                                if (diagnosisRelevantKeywords && diagnosisRelevantKeywords.includes(lowerCaseWord)) {
+                                    return <strong key={wordIndex}>{capitalizedWord}</strong>;
+                                } else {
+                                    return <span key={wordIndex}>{capitalizedWord}</span>;
+                                }
+                            });
+
+                            // Convert array of JSX elements to a single JSX element
+                            return <span key={index}>{formattedFocusArea.reduce((acc, elem, arrIndex) => (
+                                <React.Fragment key={arrIndex}>{acc} {elem}</React.Fragment>
+                            ))}</span>;
+                        }).reduce((prev, curr, arrIndex) => (
+                            <React.Fragment key={arrIndex}>{prev}, {curr}</React.Fragment>
+                        ))}
                     </p>
                   </div>
 
+                  
+                  {doctor.availabilities ? (
+                  <>
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
                     <select className="form-select mt-1 block w-full rounded-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
@@ -463,8 +582,16 @@ export default function PatientDashboard() {
                   </div>
 
                   <Button className="mt-5" onClick={handleBooking}>
-                    Book Appointment
+                  Book Appointment
                   </Button>
+                  </>
+                  ) : (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
+                      <p className="text-sm text-gray-500">No appointments available.</p>
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
@@ -507,13 +634,27 @@ export default function PatientDashboard() {
             </Card>
           </div>
 
-          {recommendedDoctorsSearch.length > 0 && (
-            <div className="grid grid-cols-2 gap-4">
-              {recommendedDoctorsSearch.map((doctor, index) => (
-                 <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg booking-div" data-doctor-id={doctor.doctorId}>
+          {recommendedDoctorsSearch.length > 0 ? (
+            <>
+            <div className="grid grid-cols-2 gap-4 mb-10">
+              
+              {recommendedDoctorsSearch.map((doctor : Doctor, index) => (
+                <div key={index} className="p-8 border border-gray-200 rounded-lg shadow-lg booking-div" data-doctor-id={doctor.doctorId}>
+                  <img 
+                      width="200" 
+                      height="200" 
+                      alt="" 
+                      src={doctor.image_url} 
+                      className="mb-5 rounded-lg border border-gray-200 shadow-lg" 
+                  />
+
                   <h3 className="text-lg font-medium text-gray-900"><strong>{doctor.name}</strong></h3>
                   <p className="text-sm text-gray-500">
-                    <strong>{doctor.specialties}</strong><br />
+                  <strong>
+                      {Array.isArray(doctor.specialties) 
+                          ? doctor.specialties.join(', ') 
+                          : doctor.specialties}
+                  </strong><br />
                     {doctor.address1}, {doctor.address2}<br />
                     {doctor.city}, {doctor.state}, {doctor.zip}<br />
                     Phone: {doctor.phone}<br />
@@ -522,21 +663,32 @@ export default function PatientDashboard() {
                   <div className="mt-2">
                     <h4 className="text-sm font-medium text-gray-900"><strong>Focus Areas</strong></h4>
                     <p className="text-sm text-gray-500">
-                      {doctor.focus.map((focusArea, index) => {
-                        const formattedFocusArea = focusArea.split(' ').map((word, wordIndex) => {
-                          const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                          if (diagnosisResult.condition && capitalizedWord.toLowerCase() === diagnosisResult.condition.toLowerCase()) {
-                            return <strong key={wordIndex}>{capitalizedWord}</strong>;
-                          } else {
-                            return capitalizedWord;
-                          }
-                        }).join(' ');
+                        {doctor.focus.map((focusArea, index) => {
+                            const formattedFocusArea = focusArea.split(' ').map((word, wordIndex) => {
+                                const lowerCaseWord = word.toLowerCase();
+                                const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 
-                        return <span key={index} dangerouslySetInnerHTML={{ __html: formattedFocusArea }} />;
-                      }).reduce((prev, curr) => <>{[prev, ', ', curr]}</>)}
+                                // Check if the word (in lowercase) is in the diagnosisRelevantKeywords list
+                                if (diagnosisRelevantKeywords && diagnosisRelevantKeywords.includes(lowerCaseWord)) {
+                                    return <strong key={wordIndex}>{capitalizedWord}</strong>;
+                                } else {
+                                    return <span key={wordIndex}>{capitalizedWord}</span>;
+                                }
+                            });
+
+                            // Convert array of JSX elements to a single JSX element
+                            return <span key={index}>{formattedFocusArea.reduce((acc, elem, arrIndex) => (
+                                <React.Fragment key={arrIndex}>{acc} {elem}</React.Fragment>
+                            ))}</span>;
+                        }).reduce((prev, curr, arrIndex) => (
+                            <React.Fragment key={arrIndex}>{prev}, {curr}</React.Fragment>
+                        ))}
                     </p>
                   </div>
 
+                  
+                  {doctor.availabilities ? (
+                  <>
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
                     <select className="form-select mt-1 block w-full rounded-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
@@ -556,11 +708,27 @@ export default function PatientDashboard() {
                   </div>
 
                   <Button className="mt-5" onClick={handleBooking}>
-                    Book Appointment
+                  Book Appointment
                   </Button>
-               </div>
+                  </>
+                  ) : (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-900"><strong>Available Appointments</strong></h4>
+                      <p className="text-sm text-gray-500">No appointments available.</p>
+                    </div>
+                  )}
+
+                </div>
               ))}
             </div>
+            </>
+          ) : (
+            <div className="flex justify-center items-center mb-10">
+              <p className="text-center text-sm text-gray-700">
+                
+              </p>
+            </div>
+          
           )}
           </>
         );
@@ -581,25 +749,27 @@ export default function PatientDashboard() {
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-zinc-100/40 lg:block dark:bg-zinc-800/40">
+      {/* <div className="hidden border-r bg-zinc-100/40 lg:block dark:bg-zinc-800/40"> */}
+      <div className="hidden border-r lg:block shadow-xxl">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-[60px] items-center border-b px-6">
-            <Link href="" className={getTabClass(activeTab)} onClick={() => setActiveTab('home')}>
+            <Link href="" className={`${getTabClass(activeTab)}`} onClick={() => setActiveTab('home')}>
                 <svg
                   className=" h-6 w-6"
-                  fill="none"
+                  fill="pink"
                   height="24"
                   stroke="currentColor"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
+                  color="pink"
                   viewBox="0 0 24 24"
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                 </svg>
-                <span className="">DermAssist+</span>
+                <span className="">DermAI+</span>
               </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">
@@ -607,9 +777,10 @@ export default function PatientDashboard() {
             {userData && userData.first_name && userData.last_name && (
               <div className="flex flex-col pb-5 pl-5">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{userData.first_name} {userData.last_name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Patient</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-light">Patient</p>
               </div>
             )}
+            <hr className="mb-5"></hr>
             <Link
                 className={getTabClass('home')}
                 href=""
@@ -639,7 +810,8 @@ export default function PatientDashboard() {
               >
                 <svg
                   className=" h-4 w-4"
-                  fill="none"
+                  fill="purple"
+                  color="white"
                   height="24"
                   stroke="currentColor"
                   strokeLinecap="round"
@@ -661,7 +833,8 @@ export default function PatientDashboard() {
               >
                 <svg
                   className=" h-4 w-4"
-                  fill="none"
+                  fill="blue"
+                  color="blue"
                   height="24"
                   stroke="currentColor"
                   strokeLinecap="round"
@@ -726,7 +899,7 @@ export default function PatientDashboard() {
               </Link>
               
               <Link
-                className={getTabClass('uploadedPhotos')}
+                className={`${getTabClass('uploadedPhotos')}`}
                 href=""
                 onClick={() => setActiveTab('uploadedPhotos')}
               >

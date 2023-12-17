@@ -1,18 +1,16 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import UpcomingDoctorAppointments from "./UpcomingDoctorAppointments";
 
 interface DoctorHomeTabProps {
     setActiveTab: (tab: string) => void;
-    // Add other relevant props, like count of photos to review
     photosToReviewCount: number;
     doctorId: string;
 }
 
 const DoctorHomeTab: React.FC<DoctorHomeTabProps> = ({ setActiveTab, photosToReviewCount, doctorId }) => {
-    
     return (
         <>
         <div className="container mx-auto py-4 px-4 space-y-8 ">

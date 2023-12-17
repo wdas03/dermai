@@ -2,20 +2,13 @@ import { useEffect, useState } from "react";
 
 import {Card, CardHeader, CardContent} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
+import ClipLoader from "react-spinners/ClipLoader";
 
 import MLDiagnosis from "@/types/MlDiagnosis";
-
-interface PatientPhoto {
-    presignedUrl: string;
-    mlDiagnosis: string;
-    isReviewed: boolean;
-    reviewedBy: string;
-    correctedDiagnosis: string;
-}
+import PatientPhoto from "@/types/PatientPhoto";
 
 export default function UploadedPatientPhotos({ userId }: { userId: string }) {
-    const [uploadedPhotos, setUploadedPhotos] = useState<PatientPhoto[]>([]);
+    const [uploadedPhotos, setUploadedPhotos] = useState<PatientPhoto[] | null>(null);
 
     const fetchUploadedPhotos = async () => {
         try {
@@ -39,6 +32,14 @@ export default function UploadedPatientPhotos({ userId }: { userId: string }) {
     useEffect(() => {
         fetchUploadedPhotos();
     }, []);
+
+    if (!uploadedPhotos) {
+        return (
+            <div className="flex justify-center items-center">
+                <ClipLoader size={40} />
+            </div>
+        );
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -76,15 +77,13 @@ export default function UploadedPatientPhotos({ userId }: { userId: string }) {
                                 {isReviewed && (
                                     <div className="mt-4">
                                         <p className="text-sm text-green-500">Reviewed by {reviewedBy}</p>
-                                        <p className="text-sm font-semibold">Corrected Diagnosis: {correctedDiagnosis || "No correction provided"}</p>
+                                        <p className="text-sm font-semibold mt-5">Corrected Diagnosis: <br /></p>
+                                        <p>{correctedDiagnosis || "No correction provided"}</p>
                                     </div>
                                 )}
                                 {!isReviewed && (
                                     <p className="mt-4 text-sm text-red-500">Not yet reviewed by a doctor</p>
                                 )}
-                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                    AI-powered diagnosis.
-                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -93,8 +92,4 @@ export default function UploadedPatientPhotos({ userId }: { userId: string }) {
 
           </div>
     )
-}
-
-function setAppointments(data: any) {
-    throw new Error("Function not implemented.");
 }

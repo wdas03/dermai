@@ -1,23 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { Button } from '@/components/ui/button';
 
+import ClipLoader from "react-spinners/ClipLoader";
+
 import ChatUI from '@/components/ChatUI';
 
 interface Appointments {
-    appointmentId: string;
-    appointmentTime: string;
+    patientEmail: string,
+    appointmentTime: Date,
+    appointmentId: string,
+    doctorId: string,
     patientInfo: {
-        first_name: string;
-        last_name: string;
+        password: string,
+        last_name: string
+        salt: string
+        email: string,
+        first_name: string
     }
 }
 
 export default function UpcomingDoctorAppointments({ userId }: { userId: string }) {
-    const [appointments, setAppointments] = useState<Appointments[]>([]); // Array of appointments
+    const [appointments, setAppointments] = useState<Appointments[] | null>(null); // Array of appointments
     const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
 
     const fetchAppointments = async () => {
+        
         try {
+            console.log(userId);
+            console.log(JSON.stringify({
+                doctorId: userId
+            }));
+            
             const response = await fetch('https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test/doctors/getAppointments', {
                 method: 'POST',
                 headers: {
@@ -29,7 +42,11 @@ export default function UpcomingDoctorAppointments({ userId }: { userId: string 
             });
 
             const data = await response.json();
-            setAppointments(data);
+            console.log("Appointments Fetch:", data);
+
+            if (!data.message) {
+                setAppointments(data);
+            }
         } catch (error) {
             console.log(error);
         }
@@ -42,7 +59,15 @@ export default function UpcomingDoctorAppointments({ userId }: { userId: string 
     useEffect(() => {
         // Fetch all appointments for the current user
         fetchAppointments();
-    });
+    }, [userId]);
+
+    if (!appointments) {
+        return (
+        <div className="flex justify-center items-center">
+          <ClipLoader size={40} />
+        </div>
+      );
+    }
 
     return (
         <>

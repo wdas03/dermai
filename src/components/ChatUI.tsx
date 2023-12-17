@@ -38,6 +38,7 @@ export default function ChatUI({ websocketUrl }: { websocketUrl: string }) {
 
     return () => {
       webSocket.close();
+      console.log("closed connection.");
     };
   }, []);
 

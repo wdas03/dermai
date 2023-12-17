@@ -11,15 +11,14 @@ import ChatUI from "@/components/ChatUI";
 import { useRouter } from 'next/navigation';
 import UpcomingDoctorAppointments from "@/components/UpcomingDoctorAppointments";
 
+import Doctor from '@/types/Doctor';
+
 const apiEndpoint = 'https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/Dev';
 
 export default function DoctorDashboard() {
   const router = useRouter();
 
-  const [doctorData, setDoctorData] = useState({
-    'doctorId': '',
-    'name': ''
-  });
+  const [doctorData, setDoctorData] = useState<Doctor | any>({});
 
   const handleLogout = () => {
       // Clear session storage
@@ -68,28 +67,36 @@ export default function DoctorDashboard() {
       <div className="hidden border-r bg-zinc-100/40 lg:block dark:bg-zinc-800/40">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-[60px] items-center border-b px-6">
-            <Link href="" className={getTabClass(activeTab)} onClick={() => setActiveTab('home')}>
+          <Link href="" className={`${getTabClass(activeTab)}`} onClick={() => setActiveTab('home')}>
                 <svg
                   className=" h-6 w-6"
-                  fill="none"
+                  fill="pink"
                   height="24"
                   stroke="currentColor"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
+                  color="pink"
                   viewBox="0 0 24 24"
                   width="24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                 </svg>
-                <span className="">DermAssist+</span>
+                <span className="">DermAI+</span>
               </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-4 text-sm font-medium">
             {doctorData && doctorData.name && (
               <div className="flex flex-col pb-5 pl-5">
+                <img 
+                width="200" 
+                height="200" 
+                alt="" 
+                src={doctorData.image_url} 
+                className="mb-2 mt-2 rounded-lg border border-gray-200 shadow-lg" 
+                />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{doctorData.name}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Doctor</p>
               </div>

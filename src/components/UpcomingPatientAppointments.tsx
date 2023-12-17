@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Button } from '@/components/ui/button';
 
+import ClipLoader from "react-spinners/ClipLoader";
+
 import ChatUI from '@/components/ChatUI';
 
 interface Appointments {
@@ -12,11 +14,12 @@ interface Appointments {
     },
     doctorInfo: {
         name: string;
+        image_url: string;
     }
 }
 
 export default function UpcomingPatientAppointments({ userId }: { userId: string }) {
-    const [appointments, setAppointments] = useState<Appointments[]>([]); // Array of appointments
+    const [appointments, setAppointments] = useState<Appointments[] | null>(null); // Array of appointments
     const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
 
     const fetchAppointments = async () => {
@@ -45,7 +48,15 @@ export default function UpcomingPatientAppointments({ userId }: { userId: string
     useEffect(() => {
         // Fetch all appointments for the current user
         fetchAppointments();
-    }, []);
+    }, [userId]);
+
+    if (!appointments) {
+        return (
+        <div className="flex justify-center items-center">
+          <ClipLoader size={40} />
+        </div>
+      );
+    }
 
     return (
         <>
@@ -61,8 +72,9 @@ export default function UpcomingPatientAppointments({ userId }: { userId: string
             : <><h1 className="text-lg font-bold">Upcoming Appointments</h1> 
                 <p>Join these chat rooms 10 minutes before your scheduled call.</p>
                 {appointments.map((appointment) => (
-                    <div key={appointment.appointmentId} className="flex justify-between items-center bg-white border shadow-sm rounded-lg p-4 mb-4">
+                    <div key={appointment.appointmentId} className="flex justify-between items-center bg-white border shadow-sm rounded-lg p-8 mb-4">
                     <div>
+                        <img src={appointment.doctorInfo.image_url} className="w-20 h-20 mb-5 rounded-full border shadow-lg border-black-400" />
                         <h3 className="text-lg font-medium">{appointment.doctorInfo.name}</h3> 
                         <p className="text-sm">{new Date(appointment.appointmentTime).toLocaleString()}</p>
                     </div>

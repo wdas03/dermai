@@ -1,6 +1,6 @@
 import { CardTitle, CardDescription, CardHeader, CardContent, CardFooter, Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import ClipLoader from "react-spinners/ClipLoader"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
@@ -26,6 +26,26 @@ function ArrowRightIcon(props: any) {
         <path d="m12 5 7 7-7 7" />
       </svg>
     )
+}
+
+function ArrowLeftIcon(props: any) {
+  return (
+      <svg
+          {...props}
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+      >
+          <path d="M19 12H5" />
+          <path d="m12 19-7-7 7-7" />
+      </svg>
+  );
 }
 
 interface ReviewPhoto {
@@ -97,11 +117,11 @@ const confirmDiagnosis = async () => {
       setSelectedDiagnosis('');
       setAdditionalComments('');
   }
-};
+  };
 
-useEffect(() => {
-    fetchPhotos();
-}, []);
+  useEffect(() => {
+      fetchPhotos();
+  }, [doctorId]);
 
   // Navigation functions
   const goToNextPhoto = () => {
@@ -118,7 +138,6 @@ useEffect(() => {
   const currentPhoto = photos[currentPhotoIndex];
 
   const labels = [
-      'No change',
       'Actinic keratoses',
       'Basal cell carcinoma',
       'Benign keratosis-like lesions',
@@ -128,7 +147,13 @@ useEffect(() => {
       'Vascular lesions'
     ];
 
-    if (!currentPhoto) return <div>No photos to review right now!</div>;
+    if (!currentPhoto) {
+      return (
+        <div className="flex justify-center items-center">
+          <ClipLoader size={40} />
+        </div>
+      );
+    };
 
     let mlDiagnosis : MLDiagnosis;
     try {
@@ -142,7 +167,9 @@ useEffect(() => {
     return (
         <div className="flex items-center justify-center gap-6 mb-10">
           {/* Left arrow for navigation */}
-          <Button onClick={goToPreviousPhoto}>Previous</Button>
+          <Button onClick={goToPreviousPhoto}>
+            <ArrowLeftIcon className="w-6 h-6" />
+          </Button>
 
           <Card className="w-full max-w-2xl p-10 grid gap-6">
             <CardHeader className="items-center space-y-0 gap-4 p-0">
@@ -205,7 +232,9 @@ useEffect(() => {
           </Card>
 
           {/* Right arrow for navigation */}
-          <Button onClick={goToNextPhoto}>Next</Button>
+          <Button onClick={goToNextPhoto}>
+            <ArrowRightIcon className="w-6 h-6" />
+          </Button>
 
           {/* <div className="flex justify-center items-center transform transition duration-500 ease-in-out hover:scale-110">
             <ArrowRightIcon className="w-12 h-12" />
