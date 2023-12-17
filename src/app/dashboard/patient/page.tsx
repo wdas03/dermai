@@ -330,7 +330,7 @@ export default function PatientDashboard() {
           <>
               <HomeTab setActiveTab={setActiveTab} />
               <div className="container mx-auto">
-                <Card className="pt-4 w-full mt-5"> {/* Adjust width as needed */}
+                <Card className="pt-4 w-full mt-5 mb-20"> {/* Adjust width as needed */}
                     <CardContent>
                         <div className="mt-2 space-y-2">
                             <UpcomingPatientAppointments userId={userData.email}/>
@@ -810,8 +810,8 @@ export default function PatientDashboard() {
               >
                 <svg
                   className=" h-4 w-4"
-                  fill="purple"
-                  color="white"
+                  fill="none"
+                  // color="white"
                   height="24"
                   stroke="currentColor"
                   strokeLinecap="round"
@@ -833,8 +833,8 @@ export default function PatientDashboard() {
               >
                 <svg
                   className=" h-4 w-4"
-                  fill="blue"
-                  color="blue"
+                  fill="none"
+                  // color="blue"
                   height="24"
                   stroke="currentColor"
                   strokeLinecap="round"

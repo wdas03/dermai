@@ -56,9 +56,10 @@ interface ReviewPhoto {
 
 export default function DoctorReviewPhoto({doctorId} : {doctorId: string}) {
   const [selectedDiagnosis, setSelectedDiagnosis] = useState('');
-  const [photos, setPhotos] = useState<ReviewPhoto[]>([]);
+  const [photos, setPhotos] = useState<ReviewPhoto[] | null>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [additionalComments, setAdditionalComments] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const fetchPhotos = async () => {
     try {
@@ -74,7 +75,12 @@ export default function DoctorReviewPhoto({doctorId} : {doctorId: string}) {
         });
 
         const data = await response.json();
-        setPhotos(data);
+
+        if (data.length == 0) {
+          setPhotos(null);
+        } else {
+          setPhotos(data);
+        }
 
         console.log(data);
 
@@ -85,43 +91,46 @@ export default function DoctorReviewPhoto({doctorId} : {doctorId: string}) {
 
 // Handle diagnosis confirmation
 const confirmDiagnosis = async () => {
-  const payload = {
-      filename: currentPhoto.userImageReference,
-      corrected_diagnosis: selectedDiagnosis,
-      doctor_id: doctorId
-  };
+    setLoading(true);
 
-  console.log(payload);
+    const payload = {
+        filename: currentPhoto.userImageReference,
+        corrected_diagnosis: selectedDiagnosis,
+        doctor_id: doctorId
+    };
 
-  try {
-    const response = await fetch('https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test/doctors/reviewImage', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
+    console.log(payload);
 
-    const data = await response.json();
-    console.log(data);
+    try {
+      const response = await fetch('https://b0pl52e7m1.execute-api.us-east-1.amazonaws.com/test/doctors/reviewImage', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+      });
 
-    fetchPhotos();
+      const data = await response.json();
+      console.log(data);
 
-  } catch (error) {
-    console.log(error);
-  }
+      fetchPhotos();
+    } catch (error) {
+      console.log(error);
+    }
 
-  // Navigate to next photo
-  if (currentPhotoIndex < photos.length - 1) {
-      setCurrentPhotoIndex(currentPhotoIndex + 1);
-      setSelectedDiagnosis('');
-      setAdditionalComments('');
-  }
+    // Navigate to next photo
+    if (currentPhotoIndex < photos.length - 1) {
+        setCurrentPhotoIndex(currentPhotoIndex + 1);
+        setSelectedDiagnosis('');
+        setAdditionalComments('');
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => {
       fetchPhotos();
-  }, [doctorId]);
+  }, [doctorId, currentPhotoIndex]);
 
   // Navigation functions
   const goToNextPhoto = () => {
@@ -135,7 +144,11 @@ const confirmDiagnosis = async () => {
       }
   };
 
-  const currentPhoto = photos[currentPhotoIndex];
+  let currentPhoto : any = null;
+  if (photos) {
+    currentPhoto = photos[currentPhotoIndex];
+  } 
+  
 
   const labels = [
       'Actinic keratoses',
@@ -147,7 +160,13 @@ const confirmDiagnosis = async () => {
       'Vascular lesions'
     ];
 
-    if (!currentPhoto) {
+    if (!photos) {
+      return (
+        <div className="flex justify-center items-center">
+          No photos to review at this time.
+        </div>
+      );
+    } else if (!currentPhoto) {
       return (
         <div className="flex justify-center items-center">
           <ClipLoader size={40} />
@@ -193,7 +212,7 @@ const confirmDiagnosis = async () => {
 
                 <div className="grid gap-1.5 w-full">
                   <h1 className="text-xl">ML Diagnosis</h1>
-                  <div className="flex items-center bg-green-100 rounded-md py-1 px-2">
+                  <div className="flex items-center bg-green-100 rounded-md p-4">
                     <h3 className="text-lg font-bold" id="ml-diagnosis" placeholder="Diagnosis">{mlDiagnosis.condition}</h3>
                   </div>
                   <div className="flex items-center bg-yellow-100 rounded-md py-1 px-2">
@@ -224,11 +243,18 @@ const confirmDiagnosis = async () => {
                 </p>
               </div>
             </CardContent>
+            {loading && (
+              <div className="flex space-x-4 justify-center">
+                <ClipLoader size={40} />
+              </div>
+            )}
             <CardFooter className="text-xs p-0 justify-center">
               <div className="flex space-x-4 justify-center">
                 <Button onClick={confirmDiagnosis} className="bg-green-500 text-white rounded-lg px-4 py-2">Confirm</Button>
-              </div>
+              </div> 
             </CardFooter>
+            
+              
           </Card>
 
           {/* Right arrow for navigation */}
