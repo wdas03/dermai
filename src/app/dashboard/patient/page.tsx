@@ -155,19 +155,25 @@ export default function PatientDashboard() {
     let selectedTimeDateFormat = null;
     if (selectedTime) {
       console.log(selectedTime);
-       // Replace ' at ' with a space and remove comma
-      const formattedTime = selectedTime.replace(' at ', ' ').replace(',', '');
-      const dateObject = new Date(formattedTime);
+
+      // Create a new Date object from the selectedTime string
+      const dateObject = new Date(selectedTime);
+
+      // Adjust the time 5 hours back
+      dateObject.setHours(dateObject.getHours() - 5);
 
       // Convert to ISO format
-      selectedTimeDateFormat = dateObject.toISOString();
+      selectedTimeDateFormat = dateObject.toISOString().slice(0, 19);
+
+      console.log("Adjusted Time:", selectedTimeDateFormat);
     }
 
+    console.log(selectedTimeDateFormat);
     console.log(doctorId);
 
     const requestData = {
-      patientEmail,
-      doctorId,
+      patientEmail: patientEmail,
+      doctorId: doctorId,
       appointmentTime: selectedTimeDateFormat
     };
 
@@ -324,21 +330,21 @@ export default function PatientDashboard() {
 
           console.log(data);
 
-          // setRecommendedDoctors(data);
+          setRecommendedDoctors(data);
           // Sort the doctors based on their earliest availability
-          const sortedDoctors = data.sort((a : Doctor, b : Doctor) => {
-            if (a.availabilities && b.availabilities) {
-              const earliestA = getEarliestAvailability(a.availabilities).getTime();
-              const earliestB = getEarliestAvailability(b.availabilities).getTime();
-              return earliestA - earliestB;
-            }
+          // const sortedDoctors = data.sort((a : Doctor, b : Doctor) => {
+          //   if (a.availabilities && b.availabilities) {
+          //     const earliestA = getEarliestAvailability(a.availabilities).getTime();
+          //     const earliestB = getEarliestAvailability(b.availabilities).getTime();
+          //     return earliestA - earliestB;
+          //   }
 
-            return -1;
-          });
+          //   return -1;
+          // });
 
-          setRecommendedDoctors(sortedDoctors);
+          // setRecommendedDoctors(sortedDoctors);
 
-          console.log("Recommended doctors:", sortedDoctors);
+          console.log("Recommended doctors:", data);
         } else {
           
           // Handle HTTP errors
