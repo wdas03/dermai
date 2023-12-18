@@ -232,7 +232,7 @@ const confirmDiagnosis = async () => {
                     value={selectedDiagnosis}
                     onChange={(e) => setSelectedDiagnosis(e.target.value)}
                 >
-                    <option value="">Select a diagnosis</option>
+                    <option value="" disabled selected hidden>Select a diagnosis</option>
                     {Object.entries(labels).map(([key, value]) => (
                         <option key={key} value={value}>{value}</option>
                     ))}

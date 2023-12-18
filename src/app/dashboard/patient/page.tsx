@@ -509,7 +509,7 @@ export default function PatientDashboard() {
                     setDiagnosisReady(true);
                 }}
             >
-                <option key={0}>Choose a diagnosis</option>
+                <option key={0} disabled selected hidden>Choose a diagnosis</option>
                 {currentDiagnoses.map((diagnosis, index) => (
                     <option key={index+1}>{diagnosis}</option>
                 ))}
