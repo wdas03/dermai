@@ -619,7 +619,7 @@ export default function PatientDashboard() {
 
                   {/* Conditionally Render Booking Message for this Doctor */}
                   {selectedDoctorId === doctor.doctorId && bookingMessage && (
-                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'text-green-200' : 'text-red-200' }}>
+                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
                       {bookingMessage}
                     </div>
                   )}
@@ -758,7 +758,7 @@ export default function PatientDashboard() {
                   </div>
 
                   {selectedDoctorId === doctor.doctorId && bookingMessage && (
-                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'text-green-200' : 'text-red-200' }}>
+                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
                       {bookingMessage}
                     </div>
                   )}
