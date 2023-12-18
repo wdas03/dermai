@@ -154,8 +154,16 @@ export default function PatientDashboard() {
 
     let selectedTimeDateFormat = null;
     if (selectedTime) {
-      selectedTimeDateFormat = new Date(selectedTime).toISOString();
+      console.log(selectedTime);
+       // Replace ' at ' with a space and remove comma
+      const formattedTime = selectedTime.replace(' at ', ' ').replace(',', '');
+      const dateObject = new Date(formattedTime);
+
+      // Convert to ISO format
+      selectedTimeDateFormat = dateObject.toISOString();
     }
+
+    console.log(doctorId);
 
     const requestData = {
       patientEmail,
@@ -180,22 +188,25 @@ export default function PatientDashboard() {
           'mode': 'cors'
       });
 
-      if (response.ok) {
-        const responseData = await response.json();
+      
+      const responseData = await response.json();
+      console.log(JSON.stringify(responseData));
+
+      if (!responseData.message) {
         console.log('Booking successful:', responseData);
 
-        // alert("Booking successful!");
 
         setBookingAppointment(false);
         setBookingMessage('Booking successful!');
         setIsBookingSuccessful(true);
       } else {
-          console.error('Booking failed:', response.statusText);
+        console.log('Booking failed:', responseData);
 
-          setBookingAppointment(false);
-          setBookingMessage('Booking failed: ' + response.statusText);
-          setIsBookingSuccessful(false);
+        setBookingAppointment(false);
+        setBookingMessage('Booking failed: ' + responseData.message);
+        setIsBookingSuccessful(false);
       }
+       
     } catch (error) {
         setBookingAppointment(false);
         
@@ -498,8 +509,9 @@ export default function PatientDashboard() {
                     setDiagnosisReady(true);
                 }}
             >
+                <option key={0}>Choose a diagnosis</option>
                 {currentDiagnoses.map((diagnosis, index) => (
-                    <option key={index}>{diagnosis}</option>
+                    <option key={index+1}>{diagnosis}</option>
                 ))}
             </select>  
 
@@ -607,7 +619,7 @@ export default function PatientDashboard() {
 
                   {/* Conditionally Render Booking Message for this Doctor */}
                   {selectedDoctorId === doctor.doctorId && bookingMessage && (
-                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
+                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'text-green-200' : 'text-red-200' }}>
                       {bookingMessage}
                     </div>
                   )}
@@ -746,7 +758,7 @@ export default function PatientDashboard() {
                   </div>
 
                   {selectedDoctorId === doctor.doctorId && bookingMessage && (
-                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'green' : 'red' }}>
+                    <div className="mt-2" style={{ color: isBookingSuccessful ? 'text-green-200' : 'text-red-200' }}>
                       {bookingMessage}
                     </div>
                   )}
